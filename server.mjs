@@ -125,18 +125,29 @@ const SMTP_PASS = process.env.SMTP_PASS || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || (SMTP_USER ? `"XYZ Intelligence" <${SMTP_USER}>` : '"XYZ Intelligence" <noreply@leadfinder.io>');
 
 let mailTransporter = null;
-if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+if (SMTP_USER && SMTP_PASS) {
   try {
-    mailTransporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS
-      }
-    });
-    console.log('[Email Gateway] SMTP Transporter active for:', SMTP_USER);
+    if ((SMTP_HOST && SMTP_HOST.includes('gmail')) || SMTP_USER.includes('@gmail.com')) {
+      mailTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS
+        }
+      });
+      console.log('[Email Gateway] Gmail Service Transporter active for:', SMTP_USER);
+    } else if (SMTP_HOST) {
+      mailTransporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS
+        }
+      });
+      console.log('[Email Gateway] Custom SMTP Transporter active for:', SMTP_USER);
+    }
   } catch (err) {
     console.warn('[Email Gateway] Failed to configure SMTP:', err.message);
   }
@@ -156,7 +167,7 @@ async function sendOtpEmail(toEmail, otpCode, type = 'signup') {
 
   if (mailTransporter) {
     try {
-      const info = await mailTransporter.sendMail({
+      const sendPromise = mailTransporter.sendMail({
         from: EMAIL_FROM,
         to: toEmail,
         subject: subject,
@@ -183,8 +194,14 @@ async function sendOtpEmail(toEmail, otpCode, type = 'signup') {
           </div>
         `
       });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email dispatch timeout (7s)')), 7000)
+      );
+
+      const info = await Promise.race([sendPromise, timeoutPromise]);
       console.log('[Email Gateway] Message sent successfully:', info.messageId);
-      return { success: true, delivered: true };
+      return { success: true, delivered: true, messageId: info.messageId };
     } catch (sendErr) {
       console.error('[Email Gateway Error]', sendErr.message);
       return { success: false, delivered: false, error: sendErr.message };
