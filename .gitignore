@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.txt
+.agent/
+.agents/
+*.log
+.DS_Store
+
+
+.vercel

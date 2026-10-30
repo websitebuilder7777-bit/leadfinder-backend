@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XYZ — Discover Local Businesses Losing Revenue to Missing Websites</title>
+  <meta name="description" content="XYZ monitors live Google Maps data to uncover high-rated businesses with missing websites, dead 404 links, and digital gaps. Built for web design agencies and growth consultants.">
+
+  <!-- Google Fonts: Newsreader (Editorial Serif) & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Subtle Navy Gradient Wash on Top Left -->
+  <div class="ambient-navy-curve" aria-hidden="true"></div>
+
+  <!-- SITE HEADER -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-row">
+        
+        <!-- Bespoke Monogram Brandmark -->
+        <a href="#" class="brand-link" aria-label="XYZ Intelligence Home">
+          <div class="brand-icon-box" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <span class="brand-title">XYZ<span>.io</span></span>
+        </a>
+
+        <!-- Main Navigation Links -->
+        <nav aria-label="Main Navigation">
+          <ul class="nav-links">
+            <li><a href="#console" class="nav-link">Live Console</a></li>
+            <li><a href="#case-study" class="nav-link">Case Study</a></li>
+            <li><a href="#methodology" class="nav-link">Methodology</a></li>
+            <li><a href="#pricing" class="nav-link">Pricing</a></li>
+            <li><a href="#faq" class="nav-link">FAQ</a></li>
+          </ul>
+        </nav>
+
+        <!-- Right Header Actions -->
+        <div class="header-ctas">
+          <button class="login-link open-auth-modal">Sign in</button>
+          <a href="#console" class="btn-pill-black">Start Finding Leads</a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- HERO SECTION (ORIGINAL EDITORIAL HEADLINE + CONVERSION BOX) -->
+    <section class="hero-section">
+      <div class="container">
+        <div class="hero-content">
+          
+          <div class="hero-badge-tag">
+            <span class="hero-badge-dot"></span>
+            <span>B2B Digital Gap Intelligence</span>
+          </div>
+
+          <!-- Editorial Serif Main Headline -->
+          <h1 class="hero-headline">
+            Find high-rated local businesses that are <em>losing clients</em> to missing websites.
+          </h1>
+
+          <!-- Product Subheading -->
+          <p class="hero-subhead">
+            XYZ continuously evaluates live Google Maps infrastructure across municipal corridors to uncover verified businesses with glowing reviews but <strong>zero web presence, broken 404 domains, or unencrypted pages</strong>. We hand your agency the exact revenue gap to pitch.
+          </p>
+
+          <!-- Conversion Signup Box -->
+          <div class="hero-signup-box">
+            
+            <div class="signup-terms-disclaimer">
+              Start prospecting in 60 seconds. <strong>25 free diagnostic audits</strong> included.
+            </div>
+
+            <!-- Email Input + Action Button -->
+            <form class="signup-form-row" onsubmit="event.preventDefault(); document.getElementById('auth-dialog').showModal();">
+              <input 
+                type="email" 
+                class="email-input-field" 
+                placeholder="Enter work email (e.g. name@agency.com)"
+                required
+              >
+              <button type="submit" class="btn-signup-submit">
+                Start Finding Leads — Free
+              </button>
+            </form>
+
+            <div class="sso-divider-row">or continue with corporate SSO</div>
+
+            <!-- Social SSO Buttons (Google & Microsoft) -->
+            <div class="sso-buttons-row">
+              
+              <!-- Google Button -->
+              <button class="sso-auth-btn open-auth-modal">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
+                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+                </svg>
+                <span>Sign up with Google</span>
+              </button>
+
+              <!-- Microsoft Button -->
+              <button class="sso-auth-btn open-auth-modal">
+                <svg width="18" height="18" viewBox="0 0 21 21">
+                  <path fill="#f25022" d="M1 1h9v9H1z"/>
+                  <path fill="#00a4ef" d="M1 11h9v9H1z"/>
+                  <path fill="#7fba00" d="M11 1h9v9h-9z"/>
+                  <path fill="#ffb900" d="M11 11h9v9h-9z"/>
+                </svg>
+                <span>Sign up with Microsoft</span>
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ORIGINAL AGENCY CASE STUDY (EDITORIAL QUOTE + NAVY METRICS) -->
+    <section class="impact-quote-section" id="case-study">
+      <div class="container">
+        
+        <div class="impact-quote-card">
+          
+          <!-- Left: Real Agency Metrics in Navy Blue -->
+          <div class="impact-metrics-col">
+            <div class="impact-client-logo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+              <span>Vanguard Studio</span>
+            </div>
+
+            <div class="impact-stat-group">
+              <span class="impact-stat-number">$42,000</span>
+              <span class="impact-stat-label">New client pipeline in 30 days</span>
+            </div>
+
+            <div class="impact-stat-group">
+              <span class="impact-stat-number">11</span>
+              <span class="impact-stat-label">Websites sold from Google Map leads</span>
+            </div>
+          </div>
+
+          <!-- Right: Editorial Quote + Author -->
+          <div class="impact-quote-col">
+            <blockquote class="impact-quote-text">
+              “Before XYZ, our agency was cold emailing random LinkedIn directors with an abysmal 2% reply rate. Prospecting businesses on Google Maps with 50+ glowing reviews that literally had no website changed our business model. Our reply rate jumped to 28% because the client pain point is immediate and undeniable.”
+            </blockquote>
+
+            <div class="impact-author-box">
+              <div class="impact-avatar">ER</div>
+              <div>
+                <div class="impact-author-name">Elena Rostova</div>
+                <div class="impact-author-role">Founder & Lead Strategist at Vanguard Studio</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- REAL-TIME AI LEAD GENERATOR & PROSPECTING CONSOLE -->
+    <section class="console-section" id="console">
+      <div class="container">
+        
+        <div class="section-editorial-header">
+          <span class="section-pill-tag">Live Market Terminal</span>
+          <h2 class="section-editorial-title">Autonomous AI Lead Discovery Engine</h2>
+          <p class="section-editorial-desc">Query live local business registries, uncover hidden digital vulnerabilities, and generate high-converting consultative outreach instantly.</p>
+        </div>
+
+        <div class="console-card">
+          
+          <!-- AI Market Scanner Input Console -->
+          <div class="ai-scanner-panel">
+            
+            <!-- Universal Natural Language AI Prompt Bar -->
+            <div class="ai-prompt-bar-container">
+              <div class="ai-prompt-bar-label">
+                <span class="ai-engine-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/>
+                  </svg>
+                  Autonomous AI Pipeline
+                </span>
+                <span class="ai-engine-subtext">Gemini Intent Planner + Playwright Live Web Extractor (No Google Console Required)</span>
+              </div>
+              <div class="ai-prompt-input-row">
+                <div class="ai-prompt-input-wrapper">
+                  <svg class="ai-prompt-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input type="text" id="ai-custom-prompt-input" class="ai-custom-prompt-input" placeholder="Type any lead requirement (e.g. 'clinic near me without website in India', 'newly opened businesses in Mumbai', 'dental clinic in Bangalore')..." value="clinic near me without website in India" />
+                </div>
+                <button id="btn-run-ai-pipeline" class="ai-prompt-submit-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  <span>Run Pipeline</span>
+                </button>
+              </div>
+
+              <!-- Quick Natural Language Suggestion Chips -->
+              <div class="ai-quick-prompts-row">
+                <span class="quick-prompt-label">Quick Prompts:</span>
+                <button class="quick-prompt-chip active" data-prompt="clinic near me without website in India">🇮🇳 Clinics in India without website</button>
+                <button class="quick-prompt-chip" data-prompt="newly opened businesses in Mumbai with no website">🇮🇳 Newly opened in Mumbai</button>
+                <button class="quick-prompt-chip" data-prompt="dental clinics in Bangalore with missing website">🇮🇳 Dental clinics in Bangalore</button>
+                <button class="quick-prompt-chip" data-prompt="roofing contractors in Dallas with missing website">🇺🇸 Roofers in Dallas (No website)</button>
+                <button class="quick-prompt-chip" data-prompt="cosmetic dentists in Austin without website">🇺🇸 Cosmetic dentists in Austin</button>
+              </div>
+            </div>
+
+            <!-- Optional Structured Filters Divider -->
+            <div class="scanner-accordion-header">
+              <span>Or refine with structured filters</span>
+            </div>
+
+            <div class="scanner-inputs-row">
+              
+              <div class="scanner-input-field">
+                <label for="scanner-niche-input" class="scanner-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                  </svg>
+                  <span>Target Industry / Vertical</span>
+                </label>
+                <div class="input-with-action">
+                  <input type="text" id="scanner-niche-input" class="scanner-text-input" placeholder="e.g. Cosmetic Dentists, Roofing, HVAC, Law Firms..." value="Clinics & Healthcare" />
+                </div>
+              </div>
+
+              <div class="scanner-input-field">
+                <label for="scanner-city-input" class="scanner-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <span>Target Metro / City</span>
+                </label>
+                <div class="input-with-action">
+                  <input type="text" id="scanner-city-input" class="scanner-text-input" placeholder="e.g. Bangalore, India, Delhi, Austin, TX..." value="Delhi, India" />
+                </div>
+              </div>
+
+              <div class="scanner-input-field scanner-filter-field">
+                <label for="scanner-vulnerability-select" class="scanner-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                  </svg>
+                  <span>Target Vulnerability</span>
+                </label>
+                <select id="scanner-vulnerability-select" class="scanner-select-input">
+                  <option value="no_website">Missing Website Only</option>
+                  <option value="all">All Digital Gaps</option>
+                  <option value="unclaimed">Unclaimed GMB Only</option>
+                  <option value="insecure_ssl">Insecure SSL (HTTP)</option>
+                  <option value="dead_link">Dead 404 Domain Links</option>
+                </select>
+              </div>
+
+              <div class="scanner-btn-field">
+                <button id="btn-run-scan" class="scanner-primary-btn">
+                  <svg class="scanner-scan-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="m16 12-4-4-4 4"/>
+                    <path d="M12 16V8"/>
+                  </svg>
+                  <span>Scan Market</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Live Status Progress Ticker with Stage Indicators -->
+            <div id="scanner-status-bar" class="scanner-status-bar" style="display: none;">
+              <div class="status-pulse-dot"></div>
+              <div class="status-content">
+                <span id="scanner-status-text" class="status-text">Initiating AI Pipeline...</span>
+                <span id="scanner-status-subtext" class="status-subtext">Stage 1/3: Analyzing requirements with Gemini</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console Sub-Topbar -->
+          <div class="console-topbar">
+            <div class="console-filter-tabs">
+              <button class="console-tab active" data-filter="all">All Discovered Accounts</button>
+              <button class="console-tab" data-filter="no_website">Missing Website</button>
+              <button class="console-tab" data-filter="unclaimed">Unclaimed GMB</button>
+              <button class="console-tab" data-filter="insecure_ssl">Insecure SSL</button>
+              <button class="console-tab" data-filter="critical">High Score (90+)</button>
+            </div>
+
+            <div class="console-actions-group">
+              <span class="live-indicator-pill">
+                <span class="live-dot"></span>
+                <span id="workspace-record-count">6 leads</span>
+              </span>
+              <button class="btn-console-action" id="btn-export-csv" title="Download current leads to CSV file">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Export CSV</span>
+              </button>
+              <button class="btn-console-action" id="btn-view-pipeline" title="View saved pipeline leads">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Pipeline (<span id="saved-leads-count">0</span>)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Split Workspace: Table Feed + Diagnostic Drawer -->
+          <div class="console-split-layout">
+            
+            <!-- Left Data Feed Table -->
+            <div class="console-table-pane">
+              <table class="light-feed-table">
+                <thead>
+                  <tr>
+                    <th style="width: 32%;">Business Entity</th>
+                    <th style="width: 22%;">Digital Vulnerability</th>
+                    <th style="width: 18%;">Est. Lost Revenue</th>
+                    <th style="width: 16%;">Reputation</th>
+                    <th style="width: 12%;">Score</th>
+                  </tr>
+                </thead>
+                <tbody id="feed-table-body">
+                  <!-- Dynamically rendered by app.js -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Right Slide-Over Inspector Drawer -->
+            <div class="console-drawer-pane">
+              
+              <!-- Dossier Header -->
+              <div class="drawer-card">
+                <div class="drawer-card-title">
+                  <span>Diagnostic Dossier</span>
+                  <span class="status-badge-verified">DIAGNOSTIC READY</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 700; color: var(--text-black);" id="inspector-lead-name">Loading Account...</h4>
+                <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;" id="inspector-lead-category">—</p>
+                
+                <div class="drawer-contact-row" id="drawer-contact-row">
+                  <div class="contact-pill" id="inspector-phone-container">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <a id="inspector-lead-phone" href="tel:" style="color: inherit; text-decoration: none;">—</a>
+                  </div>
+                  <span class="contact-pill" id="inspector-lead-address" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;">—</span>
+                </div>
+              </div>
+
+              <!-- Technical & Revenue Leakage Audit -->
+              <div class="drawer-card">
+                <div class="drawer-card-title">
+                  <span>Technical & Revenue Leakage</span>
+                </div>
+                <div class="drawer-diag-row">
+                  <span style="color: var(--text-secondary);">Website Status</span>
+                  <span style="font-weight: 600; color: #B91C1C;" id="diag-dns">No Domain Linked</span>
+                </div>
+                <div class="drawer-diag-row">
+                  <span style="color: var(--text-secondary);">Listing Ownership</span>
+                  <span style="font-weight: 600; color: #B45309;" id="diag-gmb">Unclaimed Profile</span>
+                </div>
+                <div class="drawer-diag-row">
+                  <span style="color: var(--text-secondary);">SSL / Security</span>
+                  <span style="font-weight: 600; color: var(--text-black);" id="diag-ssl">Not Present</span>
+                </div>
+                <div class="drawer-diag-row">
+                  <span style="color: var(--text-secondary);">Lead Intake Funnel</span>
+                  <span style="font-weight: 600; color: var(--text-black);" id="diag-booking">Missing / Phone Only</span>
+                </div>
+                <div class="drawer-diag-row" style="background: var(--navy-50); margin: 6px -16px -16px; padding: 10px 16px; border-radius: 0 0 var(--radius-md) var(--radius-md); border-top: 1px solid rgba(29, 78, 216, 0.15);">
+                  <span style="font-weight: 600; color: var(--navy-900);">Est. Lost Revenue:</span>
+                  <span style="font-weight: 800; font-size: 15px; color: var(--navy-700);" id="diag-lost-revenue">$84,000 / yr</span>
+                </div>
+              </div>
+
+              <!-- Consultative Outreach Pitch Kit -->
+              <div class="drawer-card" style="margin-bottom: 0;">
+                <div class="drawer-card-title">
+                  <span>Consultative Outreach Kit</span>
+                </div>
+                
+                <!-- Format Switcher: Email / Phone / DM -->
+                <div class="pitch-format-tabs">
+                  <button class="pitch-format-tab active" data-format="email">Cold Email</button>
+                  <button class="pitch-format-tab" data-format="phone">Phone Script</button>
+                  <button class="pitch-format-tab" data-format="dm">Social / DM</button>
+                </div>
+
+                <!-- Strategic Angle Selector -->
+                <div class="angle-selector-row">
+                  <select id="pitch-angle-select" class="angle-select" aria-label="Select Angle">
+                    <option value="Web Redesign & Mobile Intake">Angle: Modern Web & Mobile Intake</option>
+                    <option value="Google Business Profile Claiming">Angle: GBP Claiming & Local SEO</option>
+                    <option value="SSL Security & Trust Fix">Angle: Browser Security & SSL Fix</option>
+                    <option value="Missed Calls & After-Hours Capture">Angle: After-Hours Client Capture</option>
+                  </select>
+                  <button id="btn-regenerate-angle" class="btn-regenerate-angle" title="Generate fresh personalized angle via AI">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                    </svg>
+                    <span>Regen</span>
+                  </button>
+                </div>
+
+                <!-- Live Outreach Script Content -->
+                <div class="drawer-pitch-box" id="inspector-outreach-script">
+                  Loading tailored pitch...
+                </div>
+
+                <!-- Drawer Action Buttons -->
+                <div class="drawer-actions-row">
+                  <button class="btn-pill-navy" id="btn-copy-script" style="flex: 1; font-size: 12.5px; padding: 8px 14px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span id="copy-btn-text">Copy Outreach Pitch</span>
+                  </button>
+                  <button class="btn-pill-black" id="btn-save-lead" style="font-size: 12.5px; padding: 8px 12px;" title="Save prospect to your local pipeline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span id="save-lead-text">Save</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- METHODOLOGY & THREE PILLARS -->
+    <section class="features-section" id="methodology">
+      <div class="container">
+        
+        <div class="section-editorial-header">
+          <span class="section-pill-tag">Methodology</span>
+          <h2 class="section-editorial-title">How XYZ Uncovers High-Converting Client Leads</h2>
+          <p class="section-editorial-desc">We cross-reference live Google Places infrastructure with automated headless network probes.</p>
+        </div>
+
+        <div class="features-grid">
+          
+          <div class="feature-pillar-card">
+            <div class="feature-num">01</div>
+            <h3 class="feature-pillar-title">Sub-Meter Municipal Harvesting</h3>
+            <p class="feature-pillar-text">
+              XYZ scans polygon bounding boxes across cities and trade corridors, querying live Google Places endpoints to capture verified phone numbers, coordinates, rating trajectories, and ownership claim statuses.
+            </p>
+          </div>
+
+          <div class="feature-pillar-card">
+            <div class="feature-num">02</div>
+            <h3 class="feature-pillar-title">Headless Diagnostic Handshake</h3>
+            <p class="feature-pillar-text">
+              Automated headless checks verify domain resolution, SSL validity, and mobile responsiveness to guarantee real, undeniable outreach angles.
+            </p>
+          </div>
+
+          <div class="feature-pillar-card">
+            <div class="feature-num">03</div>
+            <h3 class="feature-pillar-title">Consultative Revenue Pitches</h3>
+            <p class="feature-pillar-text">
+              Generates customized cold proposals that frame missing websites and broken booking as direct customer revenue loss rather than generic design feedback.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="pricing-section" id="pricing">
+      <div class="container">
+        
+        <div class="section-editorial-header">
+          <span class="section-pill-tag">Subscription</span>
+          <h2 class="section-editorial-title">Predictable Pricing for High-Margin Outbound</h2>
+          <p class="section-editorial-desc">Every subscription begins with 25 free evaluation audits. No credit card required.</p>
+        </div>
+
+        <div class="pricing-cards-grid">
+          
+          <!-- Scout -->
+          <div class="pricing-card">
+            <h3 class="plan-title">Freelance Scout</h3>
+            <p class="plan-desc">For solo web designers and freelancers landing their first recurring retainers.</p>
+            <div class="plan-price-row">
+              <span class="plan-price-val">$19</span>
+              <span class="plan-price-period">/ month</span>
+            </div>
+            <ul class="plan-bullets">
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>350 Live Map Scans per month</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Automated DNS & SSL Verification</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Tailored Outreach Pitch Generator</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>1-Click CSV and Sheets Export</span>
+              </li>
+            </ul>
+            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0;">Start 7-Day Free Trial</button>
+          </div>
+
+          <!-- Agency Engine (Featured) -->
+          <div class="pricing-card featured">
+            <span class="featured-pill-badge">Most Popular</span>
+            <h3 class="plan-title">Agency Engine</h3>
+            <p class="plan-desc">For growing agencies running systematic weekly outbound prospecting.</p>
+            <div class="plan-price-row">
+              <span class="plan-price-val">$49</span>
+              <span class="plan-price-period">/ month</span>
+            </div>
+            <ul class="plan-bullets">
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span><strong>2,000 Live Map Scans</strong> per month</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Decision Maker Contact Enrichment</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Automated 1-Page PDF Audit Generator</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>3 Team Workspace Seats Included</span>
+              </li>
+            </ul>
+            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0; background: var(--navy-900);">Claim 7-Day Trial</button>
+          </div>
+
+          <!-- Enterprise Network -->
+          <div class="pricing-card">
+            <h3 class="plan-title">Enterprise Network</h3>
+            <p class="plan-desc">For large teams requiring raw programmatic API feeds and custom webhooks.</p>
+            <div class="plan-price-row">
+              <span class="plan-price-val">$99</span>
+              <span class="plan-price-period">/ month</span>
+            </div>
+            <ul class="plan-bullets">
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span><strong>7,500 Live Map Scans</strong> per month</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>REST API & Automated Webhooks</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Unlimited Team Workspace Seats</span>
+              </li>
+              <li class="plan-bullet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Dedicated Proxy Infrastructure</span>
+              </li>
+            </ul>
+            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0;">Contact Sales</button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="faq-section" id="faq">
+      <div class="container">
+        
+        <div class="section-editorial-header">
+          <span class="section-pill-tag">Frequently Asked</span>
+          <h2 class="section-editorial-title">Questions & Answers</h2>
+        </div>
+
+        <div class="faq-card-item open">
+          <button class="faq-button" aria-expanded="true">
+            <span>How does XYZ detect businesses with digital gaps?</span>
+            <span>+</span>
+          </button>
+          <div class="faq-answer">
+            XYZ probes active Google Places listings across target metropolitan markets. If a business has no website attribute, an expired DNS entry, or fails modern mobile viewport handshake requirements, our system tags it with a digital gap score and compiles an outreach angle.
+          </div>
+        </div>
+
+        <div class="faq-card-item">
+          <button class="faq-button" aria-expanded="false">
+            <span>What countries and areas can I prospect?</span>
+            <span>+</span>
+          </button>
+          <div class="faq-answer">
+            XYZ operates across all global regions supported by Google Maps Platform, including the United States, United Kingdom, Canada, Australia, and European metropolitan corridors.
+          </div>
+        </div>
+
+        <div class="faq-card-item">
+          <button class="faq-button" aria-expanded="false">
+            <span>Can I export data directly to my CRM?</span>
+            <span>+</span>
+          </button>
+          <div class="faq-answer">
+            Yes. You can export enriched prospect lists to CSV or Google Sheets with one click, or configure automated webhook streams to Zapier, Make, or HubSpot on Agency and Enterprise tiers.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-row-top">
+        <div>
+          <a href="#" class="brand-link" style="margin-bottom: 12px;">
+            <div class="brand-icon-box" style="width: 24px; height: 24px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <span class="brand-title" style="font-size: 16px;">XYZ<span>.io</span></span>
+          </a>
+          <p style="font-size: 13px; color: var(--text-secondary); max-width: 280px; line-height: 1.6;">
+            Next-generation outbound intelligence engine helping agencies discover businesses losing revenue to missing digital infrastructure.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 48px; flex-wrap: wrap;">
+          <div class="footer-nav-col">
+            <h5>Platform</h5>
+            <a href="#console">Live Console</a>
+            <a href="#methodology">Methodology</a>
+            <a href="#pricing">Pricing Plans</a>
+          </div>
+          <div class="footer-nav-col">
+            <h5>Agency Hub</h5>
+            <a href="#case-study">Vanguard Case Study</a>
+            <a href="#">Outbound Playbook</a>
+            <a href="#">Audit Templates</a>
+          </div>
+          <div class="footer-nav-col">
+            <h5>Legal</h5>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Security</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-row-bottom">
+        <div>© 2026 XYZ Technologies Inc. All rights reserved.</div>
+        <div style="display: flex; gap: 16px;">
+          <span>Status: All Systems Operational</span>
+          <span>Google Places Grounded</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- NATIVE ACCESSIBLE AUTH MODAL (Google & Microsoft SSO) -->
+  <dialog class="native-modal" id="auth-dialog" aria-labelledby="modal-auth-title">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <h3 style="font-size: 18px; font-weight: 700; color: var(--text-black);" id="modal-auth-title">Sign in to XYZ</h3>
+      <button id="auth-close-btn" style="background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--text-muted);" aria-label="Close modal">✕</button>
+    </div>
+
+    <!-- Google SSO -->
+    <button class="sso-auth-btn" style="width: 100%; margin-bottom: 10px;" onclick="alert('Connected to Google SSO authentication.'); document.getElementById('auth-dialog').close();">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+      </svg>
+      <span>Continue with Google</span>
+    </button>
+
+    <!-- Microsoft SSO -->
+    <button class="sso-auth-btn" style="width: 100%; margin-bottom: 18px;" onclick="alert('Connected to Microsoft SSO authentication.'); document.getElementById('auth-dialog').close();">
+      <svg width="18" height="18" viewBox="0 0 21 21">
+        <path fill="#f25022" d="M1 1h9v9H1z"/>
+        <path fill="#00a4ef" d="M1 11h9v9H1z"/>
+        <path fill="#7fba00" d="M11 1h9v9h-9z"/>
+        <path fill="#ffb900" d="M11 11h9v9h-9z"/>
+      </svg>
+      <span>Continue with Microsoft</span>
+    </button>
+
+    <div class="sso-divider-row" style="margin: 14px 0;">or work email</div>
+
+    <form onsubmit="event.preventDefault(); alert('Login link dispatched.'); document.getElementById('auth-dialog').close();">
+      <input type="email" placeholder="name@agency.com" style="width: 100%; height: 44px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0 14px; margin-bottom: 12px; font-family: inherit; font-size: 14px; outline: none;" required>
+      <button type="submit" class="btn-signup-submit" style="width: 100%; height: 44px;">Send Login Link</button>
+    </form>
+
+    <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 14px;">
+      25 free prospect evaluations credited automatically upon authorization.
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: leadfinder-ai-backend
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npx playwright install --with-deps chromium
+    startCommand: node server.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: GEMINI_API_KEY
+        sync: false
+
