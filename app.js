@@ -271,9 +271,8 @@ function initAiPromptBar() {
 
   if (promptBtn && promptInput) {
     const triggerPromptPipeline = () => {
-      const promptVal = promptInput.value.trim();
-      if (!promptVal) return;
-      executeAiPipeline({ prompt: promptVal });
+      const promptVal = promptInput.value.trim() || 'clinic near me without website in India';
+      window.location.href = `chat.html?q=${encodeURIComponent(promptVal)}`;
     };
 
     promptBtn.addEventListener('click', triggerPromptPipeline);
@@ -296,7 +295,7 @@ function initAiPromptBar() {
       if (promptInput) {
         promptInput.value = text;
       }
-      executeAiPipeline({ prompt: text });
+      window.location.href = `chat.html?q=${encodeURIComponent(text)}`;
     });
   });
 }
@@ -309,12 +308,12 @@ function initScanner() {
 
   if (!runBtn) return;
 
-  const triggerScan = async () => {
+  const triggerScan = () => {
     const niche = nicheInput.value.trim() || 'Clinics & Healthcare';
     const city = cityInput.value.trim() || 'Delhi, India';
     const filter = vulnSelect.value || 'no_website';
-
-    await executeAiPipeline({ niche, city, filter });
+    const query = `${niche} in ${city} (${filter.replace(/_/g, ' ')})`;
+    window.location.href = `chat.html?q=${encodeURIComponent(query)}`;
   };
 
   runBtn.addEventListener('click', triggerScan);
@@ -732,8 +731,15 @@ function renderTable() {
 
     tr.innerHTML = `
       <td>
-        <div style="font-weight: 700; color: var(--text-black);">${escapeHtml(lead.name)}</div>
-        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(lead.category)} · ${escapeHtml(lead.city)}</div>
+        <div style="font-weight: 700; color: var(--text-black); display: flex; align-items: center; gap: 6px;">
+          <span class="demo-blur-text">${escapeHtml(lead.name)}</span>
+          <span class="demo-lock-pill">🔒 Pro</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 5px;">
+          <span>${escapeHtml(lead.category)}</span>
+          <span>·</span>
+          <span class="demo-blur-light">${escapeHtml(lead.address || lead.city)}</span>
+        </div>
       </td>
       <td>
         <span class="badge-tag ${badgeClass}">
@@ -774,20 +780,39 @@ function updateDrawer(lead) {
   if (!lead) return;
 
   // Header
-  document.getElementById('inspector-lead-name').textContent = lead.name;
-  document.getElementById('inspector-lead-category').textContent = `${lead.category} · ${lead.city}`;
+  const nameEl = document.getElementById('inspector-lead-name');
+  if (nameEl) {
+    nameEl.innerHTML = `<span class="demo-blur-text">${escapeHtml(lead.name)}</span> <span class="demo-lock-pill">🔒 Pro</span>`;
+  }
+
+  const catEl = document.getElementById('inspector-lead-category');
+  if (catEl) {
+    catEl.innerHTML = `<span>${escapeHtml(lead.category)}</span> · <span class="demo-blur-light">${escapeHtml(lead.city)}</span>`;
+  }
   
-  // Contact
+  // Contact: Phone, Email, Address all blurred
   const phoneEl = document.getElementById('inspector-lead-phone');
   if (phoneEl) {
-    phoneEl.textContent = lead.phone || 'Phone on File';
-    phoneEl.href = `tel:${(lead.phone || '').replace(/[^0-9+]/g, '')}`;
+    const rawPhone = lead.phone || '+1 (512) 839-4021';
+    phoneEl.innerHTML = `<span class="demo-blur-text">${escapeHtml(rawPhone)}</span> <span class="demo-lock-pill">🔒 Pro</span>`;
+    if (phoneEl.tagName.toLowerCase() === 'a') {
+      phoneEl.removeAttribute('href');
+      phoneEl.style.cursor = 'default';
+    }
+  }
+
+  const emailEl = document.getElementById('inspector-lead-email');
+  if (emailEl) {
+    const cleanName = (lead.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const rawEmail = lead.email || `contact@${cleanName.slice(0, 14) || 'prospect'}.com`;
+    emailEl.innerHTML = `<span class="demo-blur-text">${escapeHtml(rawEmail)}</span> <span class="demo-lock-pill">🔒 Pro</span>`;
   }
   
   const addrEl = document.getElementById('inspector-lead-address');
   if (addrEl) {
-    addrEl.textContent = lead.address || lead.city;
-    addrEl.title = lead.address || lead.city;
+    const rawAddr = lead.address || `${lead.city}, Metro District`;
+    addrEl.innerHTML = `<span class="demo-blur-text">${escapeHtml(rawAddr)}</span> <span class="demo-lock-pill">🔒 Pro</span>`;
+    addrEl.title = 'Address masked in demo mode';
   }
 
   // Diagnostics
@@ -814,7 +839,26 @@ function renderPitchContent() {
   const pitchBox = document.getElementById('inspector-outreach-script');
   if (!pitchBox || !activeLead) return;
 
-  pitchBox.textContent = getActivePitchText();
+  const rawPitch = getActivePitchText();
+  pitchBox.innerHTML = `
+    <div style="position: relative;">
+      <div class="demo-blur-light" style="max-height: 110px; overflow: hidden; opacity: 0.6; line-height: 1.5; font-size: 12.5px;">
+        ${escapeHtml(rawPitch)}
+      </div>
+      <div class="outreach-lock-card">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-900); margin-bottom: 4px;">
+          🔒 Live Pitch & Decision Maker Details Locked
+        </div>
+        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.45;">
+          Launch the Autonomous AI Agent Chatbot to generate unmasked contact coordinates, verified phones, and real-time custom outreach scripts.
+        </div>
+        <a href="chat.html" class="btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 12px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+          <span>Launch AI Chatbot</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  `;
 }
 
 function getActivePitchText() {
@@ -858,58 +902,10 @@ function updateSavedCountBadge() {
    ========================================================================== */
 
 function exportLeadsToCsv() {
-  if (!currentLeads || currentLeads.length === 0) {
-    alert('No leads available to export.');
+  if (confirm('🔒 Live Demo Notice: Contact names, phone numbers, and addresses are masked in this interactive demo preview.\n\nLaunch the live AI Chatbot to run unmasked searches and export complete verified lead lists?')) {
+    window.location.href = 'chat.html';
     return;
   }
-
-  const headers = [
-    'Business Name',
-    'Category',
-    'City',
-    'Street Address',
-    'Phone',
-    'Rating',
-    'Reviews',
-    'Digital Vulnerability',
-    'Opportunity Score',
-    'Estimated Lost Revenue',
-    'Monthly Revenue Loss',
-    'Consultative Cold Pitch'
-  ];
-
-  const rows = currentLeads.map(lead => [
-    sanitizeCsvField(lead.name),
-    sanitizeCsvField(lead.category),
-    sanitizeCsvField(lead.city),
-    sanitizeCsvField(lead.address || ''),
-    sanitizeCsvField(lead.phone || ''),
-    lead.rating,
-    lead.reviews,
-    sanitizeCsvField(lead.gapLabel || lead.gapType),
-    lead.score,
-    sanitizeCsvField(lead.estLostRevenue || ''),
-    sanitizeCsvField(lead.monthlyLoss || ''),
-    sanitizeCsvField(lead.emailPitch || lead.pitch || lead.pitchHook || '')
-  ]);
-
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(r => r.join(','))
-  ].join('\r\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  
-  const citySlug = (currentLeads[0]?.city || 'Market').replace(/[^a-zA-Z0-9]/g, '_');
-  const timestamp = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = `XYZ_Leads_${citySlug}_${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 function sanitizeCsvField(field) {

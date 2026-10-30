@@ -1385,6 +1385,10 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
     '/index.html': 'index.html',
     '/styles.css': 'styles.css',
     '/app.js': 'app.js',
+    '/chat': 'chat.html',
+    '/chat.html': 'chat.html',
+    '/chat.css': 'chat.css',
+    '/chat.js': 'chat.js',
     '/favicon.ico': 'favicon.ico',
     '/robots.txt': 'robots.txt'
   };

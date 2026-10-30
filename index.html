@@ -39,6 +39,7 @@
         <!-- Main Navigation Links -->
         <nav aria-label="Main Navigation">
           <ul class="nav-links">
+            <li><a href="chat.html" class="nav-link" style="color: var(--navy-700); font-weight: 700; display: inline-flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981;"></span>AI Chatbot</a></li>
             <li><a href="#console" class="nav-link">Live Console</a></li>
             <li><a href="#case-study" class="nav-link">Case Study</a></li>
             <li><a href="#methodology" class="nav-link">Methodology</a></li>
@@ -60,7 +61,13 @@
               </svg>
               <span>Sign in</span>
             </button>
-            <a href="#console" class="btn-pill-black">Start Finding Leads</a>
+            <a href="chat.html" class="btn-pill-black" style="display: flex; align-items: center; gap: 6px;">
+              <span>Launch AI Agent</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </a>
           </div>
 
           <!-- Authenticated State -->
@@ -233,11 +240,11 @@
                   </svg>
                   <input type="text" id="ai-custom-prompt-input" class="ai-custom-prompt-input" placeholder="Type any lead requirement (e.g. 'clinic near me without website in India', 'newly opened businesses in Mumbai', 'dental clinic in Bangalore')..." value="clinic near me without website in India" />
                 </div>
-                <button id="btn-run-ai-pipeline" class="ai-prompt-submit-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
+                <button id="btn-run-ai-pipeline" class="ai-prompt-submit-btn" aria-label="Send" title="Send to AI Chatbot">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                   </svg>
-                  <span>Run Pipeline</span>
                 </button>
               </div>
 
@@ -324,6 +331,15 @@
             </div>
           </div>
 
+          <!-- Interactive Demo Paywall Notice -->
+          <div class="demo-preview-notice-bar">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span class="demo-live-badge">🔒 DEMO PREVIEW</span>
+              <span><strong>Free Preview Mode:</strong> Business entity names, phone numbers, and addresses are blurred. Click the <strong>Send icon</strong> in the prompt bar to access the real <strong>Autonomous AI Chatbot</strong>.</span>
+            </div>
+            <a href="chat.html" class="demo-notice-link">Open Real Chatbot →</a>
+          </div>
+
           <!-- Console Sub-Topbar -->
           <div class="console-topbar">
             <div class="console-filter-tabs">
@@ -392,14 +408,27 @@
                 <h4 style="font-size: 16px; font-weight: 700; color: var(--text-black);" id="inspector-lead-name">Loading Account...</h4>
                 <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;" id="inspector-lead-category">—</p>
                 
-                <div class="drawer-contact-row" id="drawer-contact-row">
+                <div class="drawer-contact-row" id="drawer-contact-row" style="flex-wrap: wrap; gap: 6px;">
                   <div class="contact-pill" id="inspector-phone-container">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                     </svg>
-                    <a id="inspector-lead-phone" href="tel:" style="color: inherit; text-decoration: none;">—</a>
+                    <span id="inspector-lead-phone">—</span>
                   </div>
-                  <span class="contact-pill" id="inspector-lead-address" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;">—</span>
+                  <div class="contact-pill" id="inspector-email-container">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    <span id="inspector-lead-email">—</span>
+                  </div>
+                  <div class="contact-pill" id="inspector-address-container" style="max-width: 100%;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span id="inspector-lead-address" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">—</span>
+                  </div>
                 </div>
               </div>
 
