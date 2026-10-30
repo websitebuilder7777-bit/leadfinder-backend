@@ -196,7 +196,7 @@ async function sendOtpEmail(toEmail, otpCode, type = 'signup') {
       });
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Email dispatch timeout (7s)')), 7000)
+        setTimeout(() => reject(new Error('Email dispatch timeout (20s)')), 20000)
       );
 
       const info = await Promise.race([sendPromise, timeoutPromise]);
@@ -669,6 +669,34 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // Diagnostic Route: Check live SMTP status
+  if (pathname === '/api/debug/smtp-status' && req.method === 'GET') {
+    if (!mailTransporter) {
+      return sendJson(res, 200, {
+        hasTransporter: false,
+        smtpUser: SMTP_USER,
+        smtpPassConfigured: Boolean(SMTP_PASS),
+        smtpHost: SMTP_HOST
+      });
+    }
+    try {
+      await mailTransporter.verify();
+      return sendJson(res, 200, {
+        success: true,
+        verified: true,
+        smtpUser: SMTP_USER,
+        emailFrom: EMAIL_FROM
+      });
+    } catch (err) {
+      return sendJson(res, 200, {
+        success: false,
+        error: err.message,
+        code: err.code,
+        response: err.response
+      });
+    }
+  }
+
   // ----------------------------------------------------
   // API ROUTE: Unified AI Lead Pipeline
   // ----------------------------------------------------
@@ -797,13 +825,15 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
         expiresAt: Date.now() + 10 * 60 * 1000
       });
 
-      await sendOtpEmail(email, otp, 'signup');
+      const emailResult = await sendOtpEmail(email, otp, 'signup');
 
       return sendJson(res, 200, {
         success: true,
         message: `Verification code sent to ${email}`,
         email,
-        devOtp: mailTransporter ? undefined : otp
+        delivered: Boolean(emailResult && emailResult.delivered),
+        devOtp: (emailResult && emailResult.delivered) ? undefined : otp,
+        emailError: (emailResult && !emailResult.delivered) ? emailResult.error : undefined
       });
     } catch (err) {
       console.error('[Auth Send-OTP Error]', err);
@@ -984,13 +1014,15 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
         expiresAt: Date.now() + 10 * 60 * 1000
       });
 
-      await sendOtpEmail(email, otp, 'forgot_password');
+      const emailResult = await sendOtpEmail(email, otp, 'forgot_password');
 
       return sendJson(res, 200, {
         success: true,
         message: `Password reset verification code sent to ${email}`,
         email,
-        devOtp: mailTransporter ? undefined : otp
+        delivered: Boolean(emailResult && emailResult.delivered),
+        devOtp: (emailResult && emailResult.delivered) ? undefined : otp,
+        emailError: (emailResult && !emailResult.delivered) ? emailResult.error : undefined
       });
     } catch (err) {
       console.error('[Auth Forgot-Password Error]', err);
@@ -1093,12 +1125,14 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
       pending.expiresAt = Date.now() + 10 * 60 * 1000;
       otpStore.set(email, pending);
 
-      await sendOtpEmail(email, newOtp, pending.type);
+      const emailResult = await sendOtpEmail(email, newOtp, pending.type);
 
       return sendJson(res, 200, {
         success: true,
         message: `A fresh verification code was sent to ${email}`,
-        devOtp: mailTransporter ? undefined : newOtp
+        delivered: Boolean(emailResult && emailResult.delivered),
+        devOtp: (emailResult && emailResult.delivered) ? undefined : newOtp,
+        emailError: (emailResult && !emailResult.delivered) ? emailResult.error : undefined
       });
     } catch (err) {
       console.error('[Auth Resend-OTP Error]', err);
