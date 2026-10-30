@@ -1,6 +1,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
@@ -71,6 +72,23 @@ function saveUsers(users) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
   } catch (err) {
     console.warn('[DataStore Write Error]', err.message);
+  }
+}
+
+// User Session Cryptographic Signatures
+const SESSION_SECRET = process.env.SESSION_SECRET || 'xyz_secret_lead_vault_2026';
+
+function generateSessionToken(userId) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(String(userId)).digest('hex');
+}
+
+function verifySession(userId, token) {
+  if (!userId || !token) return false;
+  try {
+    const expected = generateSessionToken(userId);
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch (e) {
+    return false;
   }
 }
 
@@ -677,14 +695,18 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
 
       console.log(`[Auth] User authenticated: ${existing.email} (${existing.id}) | Saved leads: ${(existing.savedLeads || []).length}`);
 
+      const token = generateSessionToken(existing.id);
+
       return sendJson(res, 200, {
         success: true,
         user: {
           id: existing.id,
           name: existing.name,
           email: existing.email,
-          picture: existing.picture
+          picture: existing.picture,
+          sessionToken: token
         },
+        sessionToken: token,
         savedLeads: existing.savedLeads || [],
         history: existing.history || []
       });
@@ -802,18 +824,42 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
   }
 
   // ----------------------------------------------------
-  // STATIC FILE SERVING
+  // STATIC FILE SERVING — HARDENED SECURITY WHITELIST
   // ----------------------------------------------------
-  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
-  
-  if (!filePath.startsWith(__dirname)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    return res.end('Access Denied');
+  const cleanPath = pathname.toLowerCase();
+
+  // 1. Strictly block any access to private data, server source code, or environment files
+  if (
+    cleanPath.startsWith('/data') ||
+    cleanPath.startsWith('/.private_data') ||
+    cleanPath.startsWith('/.') ||
+    cleanPath.includes('server') ||
+    cleanPath.includes('package') ||
+    cleanPath.includes('docker') ||
+    cleanPath.includes('yaml') ||
+    cleanPath.includes('node_modules')
+  ) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ error: 'Access Denied: Protected System Resource' }));
   }
+
+  // 2. Strict Whitelist of allowed public frontend files
+  const ALLOWED_PUBLIC_FILES = {
+    '/': 'index.html',
+    '/index.html': 'index.html',
+    '/styles.css': 'styles.css',
+    '/app.js': 'app.js',
+    '/favicon.ico': 'favicon.ico',
+    '/robots.txt': 'robots.txt'
+  };
+
+  const targetFile = ALLOWED_PUBLIC_FILES[pathname] || 'index.html';
+  const filePath = path.join(__dirname, targetFile);
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      filePath = path.join(__dirname, 'index.html');
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      return res.end('Not Found');
     }
 
     const ext = path.extname(filePath).toLowerCase();
@@ -828,7 +874,9 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
       res.writeHead(200, {
         'Content-Type': contentType,
         'Cache-Control': 'no-cache, must-revalidate',
-        'X-Content-Type-Options': 'nosniff'
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block'
       });
       res.end(content);
     });

@@ -5,6 +5,6 @@ node_modules/
 .agents/
 *.log
 .DS_Store
-
-
 .vercel
+data/
+.private_data/
