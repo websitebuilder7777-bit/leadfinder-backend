@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +92,106 @@ function verifySession(userId, token) {
   } catch (e) {
     return false;
   }
+}
+
+// ====================================================
+// PASSWORD HASHING & OTP AUTHENTICATION SYSTEM
+// ====================================================
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  try {
+    const [salt, originalHash] = stored.split(':');
+    const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(originalHash));
+  } catch (e) {
+    return false;
+  }
+}
+
+// In-memory OTP store: email -> { otp, name, hashedPassword, type, expiresAt, userId }
+const otpStore = new Map();
+
+// SMTP / Mail Gateway configuration
+const SMTP_HOST = process.env.SMTP_HOST || '';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+const EMAIL_FROM = process.env.EMAIL_FROM || (SMTP_USER ? `"XYZ Intelligence" <${SMTP_USER}>` : '"XYZ Intelligence" <noreply@leadfinder.io>');
+
+let mailTransporter = null;
+if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  try {
+    mailTransporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_PORT === 465,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS
+      }
+    });
+    console.log('[Email Gateway] SMTP Transporter active for:', SMTP_USER);
+  } catch (err) {
+    console.warn('[Email Gateway] Failed to configure SMTP:', err.message);
+  }
+} else {
+  console.log('[Email Gateway] SMTP credentials not set. OTP codes will be logged and returned for instant verification.');
+}
+
+async function sendOtpEmail(toEmail, otpCode, type = 'signup') {
+  const isReset = type === 'forgot_password';
+  const subject = isReset 
+    ? `🔐 ${otpCode} is your XYZ password reset code` 
+    : `🚀 ${otpCode} is your XYZ account verification code`;
+
+  console.log(`\n======================================================`);
+  console.log(`[EMAIL DISPATCH] To: ${toEmail} | Type: ${type} | OTP CODE: ${otpCode}`);
+  console.log(`======================================================\n`);
+
+  if (mailTransporter) {
+    try {
+      const info = await mailTransporter.sendMail({
+        from: EMAIL_FROM,
+        to: toEmail,
+        subject: subject,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+            <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 20px;">
+              XYZ <span style="color: #4338ca;">Lead Intelligence</span>
+            </div>
+            <h2 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 12px;">
+              ${isReset ? 'Reset Your Password' : 'Verify Your Email Address'}
+            </h2>
+            <p style="font-size: 15px; color: #475569; line-height: 1.6; margin: 0 0 24px;">
+              ${isReset 
+                ? 'We received a request to reset your password. Use the verification code below to authorize your password change:' 
+                : 'Thank you for registering with XYZ Lead Intelligence! Enter this verification code to activate your account and start discovering high-converting B2B leads:'}
+            </p>
+            <div style="background: #f1f5f9; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 24px; border: 1px dashed #cbd5e1;">
+              <span style="font-family: monospace; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #312e81;">${otpCode}</span>
+              <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Valid for 10 minutes</div>
+            </div>
+            <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0;">
+              If you did not make this request, you can safely ignore this email.
+            </p>
+          </div>
+        `
+      });
+      console.log('[Email Gateway] Message sent successfully:', info.messageId);
+      return { success: true, delivered: true };
+    } catch (sendErr) {
+      console.error('[Email Gateway Error]', sendErr.message);
+      return { success: false, delivered: false, error: sendErr.message };
+    }
+  }
+
+  return { success: true, delivered: false, note: 'dev_mock' };
 }
 
 // MIME type map for static serving
@@ -639,6 +740,351 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
       return sendJson(res, 200, { success: true, ...parsed });
     } catch (err) {
       console.error('[Custom Pitch Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Send OTP for Email Signup
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/send-otp' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+      const password = (body.password || '').trim();
+      const name = (body.name || '').trim();
+
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        return sendJson(res, 400, { success: false, error: 'Please enter a valid email address.' });
+      }
+      if (!password || password.length < 6) {
+        return sendJson(res, 400, { success: false, error: 'Password must be at least 6 characters long.' });
+      }
+
+      const users = getUsers();
+      const existing = Object.values(users).find(u => u.email && u.email.toLowerCase() === email);
+      if (existing && existing.passwordHash) {
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'An account with this email already exists. Please sign in or use Forgot Password.' 
+        });
+      }
+
+      // Generate 6-digit numeric OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      otpStore.set(email, {
+        otp,
+        name: name || email.split('@')[0],
+        hashedPassword: hashPassword(password),
+        type: 'signup',
+        expiresAt: Date.now() + 10 * 60 * 1000
+      });
+
+      await sendOtpEmail(email, otp, 'signup');
+
+      return sendJson(res, 200, {
+        success: true,
+        message: `Verification code sent to ${email}`,
+        email,
+        devOtp: mailTransporter ? undefined : otp
+      });
+    } catch (err) {
+      console.error('[Auth Send-OTP Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Verify OTP & Activate New Account
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/verify-otp' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+      const otp = (body.otp || '').trim();
+
+      if (!email || !otp) {
+        return sendJson(res, 400, { success: false, error: 'Email and 6-digit verification code are required.' });
+      }
+
+      const pending = otpStore.get(email);
+      if (!pending || pending.type !== 'signup') {
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'No pending registration found for this email. Please sign up again.' 
+        });
+      }
+
+      if (Date.now() > pending.expiresAt) {
+        otpStore.delete(email);
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'Verification code has expired. Please request a new code.' 
+        });
+      }
+
+      if (pending.otp !== otp) {
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'Incorrect verification code. Please check your email and try again.' 
+        });
+      }
+
+      // Create permanent verified user
+      const users = getUsers();
+      const userId = 'usr_' + crypto.createHash('sha256').update(email).digest('hex').slice(0, 16);
+      
+      const newUser = {
+        id: userId,
+        email: email,
+        name: pending.name || email.split('@')[0],
+        passwordHash: pending.hashedPassword,
+        isVerified: true,
+        picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(pending.name || email)}`,
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+        authProvider: 'email_password',
+        savedLeads: [],
+        history: []
+      };
+
+      users[userId] = newUser;
+      saveUsers(users);
+      otpStore.delete(email);
+
+      const token = generateSessionToken(userId);
+      console.log(`[Auth] User registered and verified: ${email} (${userId})`);
+
+      return sendJson(res, 200, {
+        success: true,
+        message: 'Account successfully verified! Welcome aboard.',
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          picture: newUser.picture,
+          sessionToken: token
+        },
+        sessionToken: token,
+        savedLeads: [],
+        history: []
+      });
+    } catch (err) {
+      console.error('[Auth Verify-OTP Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Email & Password Login
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/login' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+      const password = (body.password || '').trim();
+
+      if (!email || !password) {
+        return sendJson(res, 400, { success: false, error: 'Email and password are required.' });
+      }
+
+      const users = getUsers();
+      const user = Object.values(users).find(u => u.email && u.email.toLowerCase() === email);
+
+      if (!user) {
+        return sendJson(res, 404, { 
+          success: false, 
+          error: 'No account found with this email. Please create an account first.' 
+        });
+      }
+
+      if (!user.passwordHash) {
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'This account was registered without a password. Please use Forgot Password to set one.' 
+        });
+      }
+
+      if (!verifyPassword(password, user.passwordHash)) {
+        return sendJson(res, 401, { 
+          success: false, 
+          error: 'Incorrect password. Try again or click Forgot Password.' 
+        });
+      }
+
+      user.lastLoginAt = new Date().toISOString();
+      saveUsers(users);
+
+      const token = generateSessionToken(user.id);
+      console.log(`[Auth] User logged in: ${user.email} (${user.id})`);
+
+      return sendJson(res, 200, {
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          picture: user.picture,
+          sessionToken: token
+        },
+        sessionToken: token,
+        savedLeads: user.savedLeads || [],
+        history: user.history || []
+      });
+    } catch (err) {
+      console.error('[Auth Login Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Forgot Password Request (Sends OTP)
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/forgot-password' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+
+      if (!email) {
+        return sendJson(res, 400, { success: false, error: 'Email address is required.' });
+      }
+
+      const users = getUsers();
+      const user = Object.values(users).find(u => u.email && u.email.toLowerCase() === email);
+
+      if (!user) {
+        return sendJson(res, 404, { 
+          success: false, 
+          error: 'No registered account found with this email address.' 
+        });
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      otpStore.set(email, {
+        otp,
+        userId: user.id,
+        type: 'forgot_password',
+        expiresAt: Date.now() + 10 * 60 * 1000
+      });
+
+      await sendOtpEmail(email, otp, 'forgot_password');
+
+      return sendJson(res, 200, {
+        success: true,
+        message: `Password reset verification code sent to ${email}`,
+        email,
+        devOtp: mailTransporter ? undefined : otp
+      });
+    } catch (err) {
+      console.error('[Auth Forgot-Password Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Reset Password with Verified OTP
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/reset-password' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+      const otp = (body.otp || '').trim();
+      const newPassword = (body.newPassword || '').trim();
+
+      if (!email || !otp || !newPassword) {
+        return sendJson(res, 400, { success: false, error: 'Email, verification code, and new password are required.' });
+      }
+
+      if (newPassword.length < 6) {
+        return sendJson(res, 400, { success: false, error: 'New password must be at least 6 characters long.' });
+      }
+
+      const pending = otpStore.get(email);
+      if (!pending || pending.type !== 'forgot_password') {
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'No active password reset request found. Please request a new code.' 
+        });
+      }
+
+      if (Date.now() > pending.expiresAt) {
+        otpStore.delete(email);
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'Verification code has expired. Please request a new code.' 
+        });
+      }
+
+      if (pending.otp !== otp) {
+        return sendJson(res, 400, { 
+          success: false, 
+          error: 'Incorrect verification code. Please check your email and try again.' 
+        });
+      }
+
+      const users = getUsers();
+      const user = users[pending.userId] || Object.values(users).find(u => u.email && u.email.toLowerCase() === email);
+      if (!user) {
+        return sendJson(res, 404, { success: false, error: 'User account not found.' });
+      }
+
+      user.passwordHash = hashPassword(newPassword);
+      user.lastPasswordReset = new Date().toISOString();
+      user.lastLoginAt = new Date().toISOString();
+      saveUsers(users);
+      otpStore.delete(email);
+
+      const token = generateSessionToken(user.id);
+      console.log(`[Auth] Password successfully reset for: ${email}`);
+
+      return sendJson(res, 200, {
+        success: true,
+        message: 'Password successfully changed! You are now logged in.',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          picture: user.picture,
+          sessionToken: token
+        },
+        sessionToken: token,
+        savedLeads: user.savedLeads || [],
+        history: user.history || []
+      });
+    } catch (err) {
+      console.error('[Auth Reset-Password Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Resend OTP Code
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/resend-otp' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+      if (!email) return sendJson(res, 400, { success: false, error: 'Email is required.' });
+
+      const pending = otpStore.get(email);
+      if (!pending) {
+        return sendJson(res, 400, { success: false, error: 'No active verification pending. Please start over.' });
+      }
+
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      pending.otp = newOtp;
+      pending.expiresAt = Date.now() + 10 * 60 * 1000;
+      otpStore.set(email, pending);
+
+      await sendOtpEmail(email, newOtp, pending.type);
+
+      return sendJson(res, 200, {
+        success: true,
+        message: `A fresh verification code was sent to ${email}`,
+        devOtp: mailTransporter ? undefined : newOtp
+      });
+    } catch (err) {
+      console.error('[Auth Resend-OTP Error]', err);
       return sendJson(res, 500, { success: false, error: err.message });
     }
   }

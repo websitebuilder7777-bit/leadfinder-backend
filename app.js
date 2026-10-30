@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initActionButtons();
   initFaqAccordion();
   initAuthModal();
-  initGoogleAuth();
+  initEmailOtpAuth();
 
   updateAuthUi();
   renderTable();
@@ -958,6 +958,7 @@ function initAuthModal() {
   openButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (typeof switchAuthView === 'function') switchAuthView('auth-view-signin');
       if (typeof modal.showModal === 'function') {
         modal.showModal();
       } else {
@@ -1228,61 +1229,498 @@ function initRealGoogleOAuth(clientId) {
   }
 }
 
-function launchRealGoogleLogin() {
-  if (!activeGoogleClientId) {
-    const modal = document.getElementById('auth-dialog');
-    if (modal && typeof modal.showModal === 'function') modal.showModal();
-    showToast('Enter your Google Cloud OAuth Client ID to open the live Google sign-in window.', 'info');
+/* ==========================================================================
+   EMAIL + PASSWORD + OTP AUTHENTICATION CLIENT SYSTEM
+   ========================================================================== */
+
+let pendingSignupEmail = '';
+let pendingResetEmail = '';
+let otpCountdownTimer = null;
+
+function switchAuthView(viewId) {
+  const views = [
+    'auth-view-signin',
+    'auth-view-signup',
+    'auth-view-otp',
+    'auth-view-forgot',
+    'auth-view-reset-password'
+  ];
+  views.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (id === viewId) ? 'block' : 'none';
+  });
+
+  const tabSignin = document.getElementById('tab-btn-signin');
+  const tabSignup = document.getElementById('tab-btn-signup');
+  const tabsContainer = document.getElementById('auth-nav-tabs');
+
+  if (viewId === 'auth-view-signin') {
+    if (tabsContainer) tabsContainer.style.display = 'flex';
+    if (tabSignin) tabSignin.classList.add('active');
+    if (tabSignup) tabSignup.classList.remove('active');
+  } else if (viewId === 'auth-view-signup') {
+    if (tabsContainer) tabsContainer.style.display = 'flex';
+    if (tabSignup) tabSignup.classList.add('active');
+    if (tabSignin) tabSignin.classList.remove('active');
+  } else {
+    if (tabsContainer) tabsContainer.style.display = 'none';
+  }
+}
+
+function startOtpCountdown(targetLabelId, durationSeconds = 600) {
+  if (otpCountdownTimer) clearInterval(otpCountdownTimer);
+  let remaining = durationSeconds;
+  const label = document.getElementById(targetLabelId);
+
+  function update() {
+    const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+    const secs = (remaining % 60).toString().padStart(2, '0');
+    if (label) label.textContent = `${mins}:${secs}`;
+    if (remaining <= 0) {
+      clearInterval(otpCountdownTimer);
+      if (label) label.textContent = 'Expired';
+    }
+    remaining--;
+  }
+
+  update();
+  otpCountdownTimer = setInterval(update, 1000);
+}
+
+async function handleSignInSubmit(e) {
+  if (e) e.preventDefault();
+  const emailInput = document.getElementById('signin-email');
+  const pwInput = document.getElementById('signin-password');
+  const btn = document.getElementById('btn-submit-signin');
+
+  const email = (emailInput?.value || '').trim();
+  const password = (pwInput?.value || '').trim();
+
+  if (!email || !password) {
+    showToast('Please enter both email and password.', 'warning');
     return;
   }
 
-  if (!googleTokenClient && window.google && window.google.accounts && window.google.accounts.oauth2) {
-    initRealGoogleOAuth(activeGoogleClientId);
-  }
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Signing in...</span>';
+    }
 
-  if (googleTokenClient) {
-    // This pops up the authentic https://accounts.google.com window!
-    googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-  } else {
-    // Fallback: try GIS prompt
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      showToast('Google OAuth SDK is loading. Please try again in 2 seconds.', 'info');
+    const res = await callBackendApi('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Login failed. Please check credentials.');
+    }
+
+    currentUser = data.user;
+    localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+    if (data.sessionToken) localStorage.setItem('xyz_session_token', data.sessionToken);
+
+    if (Array.isArray(data.savedLeads)) {
+      userSavedLeads = data.savedLeads;
+      savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+      localStorage.setItem('xyz_user_saved_leads', JSON.stringify(userSavedLeads));
+    }
+
+    updateAuthUi();
+    renderTable();
+    showToast(`✓ Welcome back, ${currentUser.name || currentUser.email}!`, 'success');
+
+    const modal = document.getElementById('auth-dialog');
+    if (modal && typeof modal.close === 'function') modal.close();
+  } catch (err) {
+    console.error('[Sign In Error]', err);
+    showToast(err.message, 'warning');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>Sign In</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>';
     }
   }
 }
 
-function initGoogleAuth() {
-  // Connect Client ID button
-  const saveClientIdBtn = document.getElementById('btn-save-client-id');
-  const inputClientId = document.getElementById('input-google-client-id');
+async function handleSignUpSubmit(e) {
+  if (e) e.preventDefault();
+  const nameInput = document.getElementById('signup-name');
+  const emailInput = document.getElementById('signup-email');
+  const pwInput = document.getElementById('signup-password');
+  const btn = document.getElementById('btn-submit-signup');
 
-  if (saveClientIdBtn && inputClientId) {
-    saveClientIdBtn.addEventListener('click', () => {
-      const val = inputClientId.value.trim();
-      if (!val) {
-        alert('Please enter a valid Google Cloud OAuth Client ID.');
-        return;
+  const name = (nameInput?.value || '').trim();
+  const email = (emailInput?.value || '').trim();
+  const password = (pwInput?.value || '').trim();
+
+  if (!email || !password) {
+    showToast('Please enter an email and password.', 'warning');
+    return;
+  }
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters long.', 'warning');
+    return;
+  }
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Sending code...</span>';
+    }
+
+    const res = await callBackendApi('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to send verification code.');
+    }
+
+    pendingSignupEmail = email;
+
+    // Switch to OTP view
+    switchAuthView('auth-view-otp');
+    const label = document.getElementById('otp-target-email-label');
+    if (label) label.textContent = email;
+
+    startOtpCountdown('otp-timer-count', 600);
+
+    // If devOtp is returned for direct testing
+    const chip = document.getElementById('otp-dev-helper-chip');
+    if (chip && data.devOtp) {
+      chip.style.display = 'block';
+      chip.innerHTML = `⚡ <strong>Test OTP:</strong> <span style="letter-spacing: 2px; font-family: monospace;">${data.devOtp}</span> &nbsp;—&nbsp; Click to auto-fill`;
+      chip.onclick = () => {
+        const otpInput = document.getElementById('otp-code-input');
+        if (otpInput) {
+          otpInput.value = data.devOtp;
+          handleVerifyOtpSubmit();
+        }
+      };
+    } else if (chip) {
+      chip.style.display = 'none';
+    }
+
+    const otpInput = document.getElementById('otp-code-input');
+    if (otpInput) {
+      otpInput.value = '';
+      otpInput.focus();
+    }
+
+    showToast(`Verification code sent to ${email}`, 'info');
+  } catch (err) {
+    console.error('[Sign Up Error]', err);
+    showToast(err.message, 'warning');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>Send Verification Code (OTP)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+  }
+}
+
+async function handleVerifyOtpSubmit(e) {
+  if (e) e.preventDefault();
+  const otpInput = document.getElementById('otp-code-input');
+  const btn = document.getElementById('btn-submit-verify-otp');
+  const otp = (otpInput?.value || '').trim();
+
+  if (!otp || otp.length < 6) {
+    showToast('Please enter the 6-digit verification code.', 'warning');
+    return;
+  }
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Verifying...</span>';
+    }
+
+    const res = await callBackendApi('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingSignupEmail, otp })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Verification failed. Code may be incorrect or expired.');
+    }
+
+    currentUser = data.user;
+    localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+    if (data.sessionToken) localStorage.setItem('xyz_session_token', data.sessionToken);
+
+    if (Array.isArray(data.savedLeads)) {
+      userSavedLeads = data.savedLeads;
+      savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+      localStorage.setItem('xyz_user_saved_leads', JSON.stringify(userSavedLeads));
+    }
+
+    updateAuthUi();
+    renderTable();
+    showToast('🎉 Account verified! Welcome to XYZ Lead Intelligence.', 'success');
+
+    const modal = document.getElementById('auth-dialog');
+    if (modal && typeof modal.close === 'function') modal.close();
+  } catch (err) {
+    console.error('[Verify OTP Error]', err);
+    showToast(err.message, 'warning');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>Verify & Activate Account</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+  }
+}
+
+async function handleForgotSubmit(e) {
+  if (e) e.preventDefault();
+  const emailInput = document.getElementById('forgot-email');
+  const btn = document.getElementById('btn-submit-forgot');
+  const email = (emailInput?.value || '').trim();
+
+  if (!email) {
+    showToast('Please enter your registered email.', 'warning');
+    return;
+  }
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Sending code...</span>';
+    }
+
+    const res = await callBackendApi('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to send reset code.');
+    }
+
+    pendingResetEmail = email;
+
+    // Switch to Reset Password view
+    switchAuthView('auth-view-reset-password');
+    const label = document.getElementById('reset-target-email-label');
+    if (label) label.textContent = email;
+
+    const chip = document.getElementById('reset-dev-helper-chip');
+    if (chip && data.devOtp) {
+      chip.style.display = 'block';
+      chip.innerHTML = `⚡ <strong>Reset OTP:</strong> <span style="letter-spacing: 2px; font-family: monospace;">${data.devOtp}</span> &nbsp;—&nbsp; Click to auto-fill`;
+      chip.onclick = () => {
+        const otpInput = document.getElementById('reset-otp-input');
+        if (otpInput) otpInput.value = data.devOtp;
+      };
+    } else if (chip) {
+      chip.style.display = 'none';
+    }
+
+    const otpInput = document.getElementById('reset-otp-input');
+    if (otpInput) {
+      otpInput.value = '';
+      otpInput.focus();
+    }
+
+    showToast(`Password reset code sent to ${email}`, 'info');
+  } catch (err) {
+    console.error('[Forgot Password Error]', err);
+    showToast(err.message, 'warning');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>Send Reset OTP Code</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+  }
+}
+
+async function handleResetPasswordSubmit(e) {
+  if (e) e.preventDefault();
+  const otpInput = document.getElementById('reset-otp-input');
+  const pwInput = document.getElementById('reset-new-password');
+  const btn = document.getElementById('btn-submit-reset-password');
+
+  const otp = (otpInput?.value || '').trim();
+  const newPassword = (pwInput?.value || '').trim();
+
+  if (!otp || !newPassword) {
+    showToast('Please enter both the OTP code and your new password.', 'warning');
+    return;
+  }
+  if (newPassword.length < 6) {
+    showToast('New password must be at least 6 characters long.', 'warning');
+    return;
+  }
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Updating password...</span>';
+    }
+
+    const res = await callBackendApi('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingResetEmail, otp, newPassword })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Password reset failed.');
+    }
+
+    currentUser = data.user;
+    localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+    if (data.sessionToken) localStorage.setItem('xyz_session_token', data.sessionToken);
+
+    if (Array.isArray(data.savedLeads)) {
+      userSavedLeads = data.savedLeads;
+      savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+      localStorage.setItem('xyz_user_saved_leads', JSON.stringify(userSavedLeads));
+    }
+
+    updateAuthUi();
+    renderTable();
+    showToast('✓ Password updated successfully! You are now signed in.', 'success');
+
+    const modal = document.getElementById('auth-dialog');
+    if (modal && typeof modal.close === 'function') modal.close();
+  } catch (err) {
+    console.error('[Reset Password Error]', err);
+    showToast(err.message, 'warning');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>Update Password & Sign In</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+  }
+}
+
+function initEmailOtpAuth() {
+  // Password Show / Hide toggles
+  document.querySelectorAll('.auth-pw-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const input = document.getElementById(targetId);
+      if (input) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.textContent = '🔒';
+        } else {
+          input.type = 'password';
+          btn.textContent = '👁️';
+        }
       }
+    });
+  });
+
+  // Tab buttons
+  const tabSignin = document.getElementById('tab-btn-signin');
+  const tabSignup = document.getElementById('tab-btn-signup');
+  if (tabSignin) tabSignin.addEventListener('click', () => switchAuthView('auth-view-signin'));
+  if (tabSignup) tabSignup.addEventListener('click', () => switchAuthView('auth-view-signup'));
+
+  // Navigation Links between views
+  const linkGotoSignup = document.getElementById('link-goto-signup');
+  if (linkGotoSignup) linkGotoSignup.addEventListener('click', () => switchAuthView('auth-view-signup'));
+
+  const linkGotoSignin = document.getElementById('link-goto-signin');
+  if (linkGotoSignin) linkGotoSignin.addEventListener('click', () => switchAuthView('auth-view-signin'));
+
+  const btnGotoForgot = document.getElementById('btn-goto-forgot');
+  if (btnGotoForgot) btnGotoForgot.addEventListener('click', () => switchAuthView('auth-view-forgot'));
+
+  const linkForgotToSignin = document.getElementById('link-forgot-to-signin');
+  if (linkForgotToSignin) linkForgotToSignin.addEventListener('click', () => switchAuthView('auth-view-signin'));
+
+  const linkResetToSignin = document.getElementById('link-reset-to-signin');
+  if (linkResetToSignin) linkResetToSignin.addEventListener('click', () => switchAuthView('auth-view-signin'));
+
+  const btnBackToSignup = document.getElementById('btn-back-to-signup');
+  if (btnBackToSignup) btnBackToSignup.addEventListener('click', () => switchAuthView('auth-view-signup'));
+
+  // Form Submissions
+  const formSignin = document.getElementById('form-signin');
+  if (formSignin) formSignin.addEventListener('submit', handleSignInSubmit);
+
+  const formSignup = document.getElementById('form-signup');
+  if (formSignup) formSignup.addEventListener('submit', handleSignUpSubmit);
+
+  const formVerifyOtp = document.getElementById('form-verify-otp');
+  if (formVerifyOtp) formVerifyOtp.addEventListener('submit', handleVerifyOtpSubmit);
+
+  const formForgot = document.getElementById('form-forgot');
+  if (formForgot) formForgot.addEventListener('submit', handleForgotSubmit);
+
+  const formResetPassword = document.getElementById('form-reset-password');
+  if (formResetPassword) formResetPassword.addEventListener('submit', handleResetPasswordSubmit);
+
+  // Resend OTP buttons
+  const btnResendSignupOtp = document.getElementById('btn-resend-signup-otp');
+  if (btnResendSignupOtp) {
+    btnResendSignupOtp.addEventListener('click', async () => {
+      if (!pendingSignupEmail) return;
+      showToast('Requesting fresh verification code...', 'info');
       try {
-        localStorage.setItem('xyz_google_client_id', val);
-      } catch (e) {}
-      activeGoogleClientId = val;
-      initRealGoogleOAuth(val);
-      showToast('✓ Client ID connected! Launching Google Sign-in...', 'info');
-      setTimeout(() => {
-        launchRealGoogleLogin();
-      }, 500);
+        const res = await callBackendApi('/api/auth/resend-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingSignupEmail })
+        });
+        const data = await res.json();
+        if (data.success) {
+          startOtpCountdown('otp-timer-count', 600);
+          const chip = document.getElementById('otp-dev-helper-chip');
+          if (chip && data.devOtp) {
+            chip.style.display = 'block';
+            chip.innerHTML = `⚡ <strong>New Code:</strong> <span style="letter-spacing: 2px; font-family: monospace;">${data.devOtp}</span> &nbsp;—&nbsp; Click to auto-fill`;
+          }
+          showToast('Fresh code sent to your email!', 'success');
+        } else {
+          showToast(data.error || 'Failed to resend code', 'warning');
+        }
+      } catch (e) {
+        showToast(e.message, 'warning');
+      }
     });
   }
 
-  // Real Google OAuth Button inside modal
-  const launchBtn = document.getElementById('btn-launch-real-google');
-  if (launchBtn) {
-    launchBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      launchRealGoogleLogin();
+  const btnResendResetOtp = document.getElementById('btn-resend-reset-otp');
+  if (btnResendResetOtp) {
+    btnResendResetOtp.addEventListener('click', async () => {
+      if (!pendingResetEmail) return;
+      showToast('Requesting fresh reset code...', 'info');
+      try {
+        const res = await callBackendApi('/api/auth/resend-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingResetEmail })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const chip = document.getElementById('reset-dev-helper-chip');
+          if (chip && data.devOtp) {
+            chip.style.display = 'block';
+            chip.innerHTML = `⚡ <strong>New Reset Code:</strong> <span style="letter-spacing: 2px; font-family: monospace;">${data.devOtp}</span> &nbsp;—&nbsp; Click to auto-fill`;
+          }
+          showToast('Fresh reset code sent to your email!', 'success');
+        } else {
+          showToast(data.error || 'Failed to resend reset code', 'warning');
+        }
+      } catch (e) {
+        showToast(e.message, 'warning');
+      }
     });
   }
 
@@ -1291,28 +1729,9 @@ function initGoogleAuth() {
   if (headerSignInBtn) {
     headerSignInBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      if (activeGoogleClientId && googleTokenClient) {
-        launchRealGoogleLogin();
-      } else {
-        const modal = document.getElementById('auth-dialog');
-        if (modal && typeof modal.showModal === 'function') modal.showModal();
-      }
-    });
-  }
-
-  // Hero Sign up with Google button
-  const heroGoogleBtn = document.getElementById('hero-google-auth-btn');
-  if (heroGoogleBtn) {
-    heroGoogleBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (activeGoogleClientId && googleTokenClient) {
-        launchRealGoogleLogin();
-      } else {
-        const modal = document.getElementById('auth-dialog');
-        if (modal && typeof modal.showModal === 'function') modal.showModal();
-        const input = document.getElementById('input-google-client-id');
-        if (input) input.focus();
-      }
+      switchAuthView('auth-view-signin');
+      const modal = document.getElementById('auth-dialog');
+      if (modal && typeof modal.showModal === 'function') modal.showModal();
     });
   }
 
@@ -1350,14 +1769,4 @@ function initGoogleAuth() {
       renderTable();
     });
   }
-
-  // Fetch client ID and initialize
-  fetchAndInitGoogleOAuth();
-
-  // Retry init after 1.5s in case Google script finished loading late
-  setTimeout(() => {
-    if (activeGoogleClientId && !googleTokenClient) {
-      initRealGoogleOAuth(activeGoogleClientId);
-    }
-  }, 1500);
 }
