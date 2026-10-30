@@ -1413,7 +1413,11 @@ async function handleSignUpSubmit(e) {
       otpInput.focus();
     }
 
-    showToast(`Verification code sent to ${email}`, 'info');
+    if (data.devOtp) {
+      showToast(`Verification code: ${data.devOtp} (Click helper chip to auto-fill)`, 'info');
+    } else {
+      showToast(`Verification code sent to ${email}`, 'info');
+    }
   } catch (err) {
     console.error('[Sign Up Error]', err);
     showToast(err.message, 'warning');
@@ -1533,7 +1537,11 @@ async function handleForgotSubmit(e) {
       otpInput.focus();
     }
 
-    showToast(`Password reset code sent to ${email}`, 'info');
+    if (data.devOtp) {
+      showToast(`Reset code: ${data.devOtp} (Click helper chip to auto-fill)`, 'info');
+    } else {
+      showToast(`Password reset code sent to ${email}`, 'info');
+    }
   } catch (err) {
     console.error('[Forgot Password Error]', err);
     showToast(err.message, 'warning');

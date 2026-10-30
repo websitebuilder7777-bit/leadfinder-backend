@@ -123,6 +123,7 @@ const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || (SMTP_USER ? `"XYZ Intelligence" <${SMTP_USER}>` : '"XYZ Intelligence" <noreply@leadfinder.io>');
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 
 let mailTransporter = null;
 if (SMTP_USER && SMTP_PASS) {
@@ -165,45 +166,75 @@ async function sendOtpEmail(toEmail, otpCode, type = 'signup') {
   console.log(`[EMAIL DISPATCH] To: ${toEmail} | Type: ${type} | OTP CODE: ${otpCode}`);
   console.log(`======================================================\n`);
 
+  const htmlBody = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+      <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 20px;">
+        XYZ <span style="color: #4338ca;">Lead Intelligence</span>
+      </div>
+      <h2 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 12px;">
+        ${isReset ? 'Reset Your Password' : 'Verify Your Email Address'}
+      </h2>
+      <p style="font-size: 15px; color: #475569; line-height: 1.6; margin: 0 0 24px;">
+        ${isReset 
+          ? 'We received a request to reset your password. Use the verification code below to authorize your password change:' 
+          : 'Thank you for registering with XYZ Lead Intelligence! Enter this verification code to activate your account and start discovering high-converting B2B leads:'}
+      </p>
+      <div style="background: #f1f5f9; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 24px; border: 1px dashed #cbd5e1;">
+        <span style="font-family: monospace; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #312e81;">${otpCode}</span>
+        <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Valid for 10 minutes</div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0;">
+        If you did not make this request, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+
+  // 1. Try HTTPS Resend API if key is present (100% port 443 cloud firewall proof)
+  if (RESEND_API_KEY) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'XYZ Leads <onboarding@resend.dev>',
+          to: [toEmail],
+          subject: subject,
+          html: htmlBody
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        console.log('[Email Gateway: Resend] Message sent successfully:', data.id);
+        return { success: true, delivered: true, messageId: data.id, provider: 'resend' };
+      }
+      console.warn('[Email Gateway: Resend Error]', data);
+    } catch (resendErr) {
+      console.error('[Email Gateway: Resend Error]', resendErr.message);
+    }
+  }
+
+  // 2. Try SMTP Transporter (with fast 3.5s timeout for cloud hosts that block port 465/587)
   if (mailTransporter) {
     try {
       const sendPromise = mailTransporter.sendMail({
         from: EMAIL_FROM,
         to: toEmail,
         subject: subject,
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
-            <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 20px;">
-              XYZ <span style="color: #4338ca;">Lead Intelligence</span>
-            </div>
-            <h2 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 12px;">
-              ${isReset ? 'Reset Your Password' : 'Verify Your Email Address'}
-            </h2>
-            <p style="font-size: 15px; color: #475569; line-height: 1.6; margin: 0 0 24px;">
-              ${isReset 
-                ? 'We received a request to reset your password. Use the verification code below to authorize your password change:' 
-                : 'Thank you for registering with XYZ Lead Intelligence! Enter this verification code to activate your account and start discovering high-converting B2B leads:'}
-            </p>
-            <div style="background: #f1f5f9; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 24px; border: 1px dashed #cbd5e1;">
-              <span style="font-family: monospace; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #312e81;">${otpCode}</span>
-              <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Valid for 10 minutes</div>
-            </div>
-            <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0;">
-              If you did not make this request, you can safely ignore this email.
-            </p>
-          </div>
-        `
+        html: htmlBody
       });
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Email dispatch timeout (20s)')), 20000)
+        setTimeout(() => reject(new Error('SMTP outbound port blocked or unreachable')), 3500)
       );
 
       const info = await Promise.race([sendPromise, timeoutPromise]);
-      console.log('[Email Gateway] Message sent successfully:', info.messageId);
-      return { success: true, delivered: true, messageId: info.messageId };
+      console.log('[Email Gateway: SMTP] Message sent successfully:', info.messageId);
+      return { success: true, delivered: true, messageId: info.messageId, provider: 'smtp' };
     } catch (sendErr) {
-      console.error('[Email Gateway Error]', sendErr.message);
+      console.warn('[Email Gateway Warning] SMTP delivery failed/blocked:', sendErr.message);
       return { success: false, delivered: false, error: sendErr.message };
     }
   }
