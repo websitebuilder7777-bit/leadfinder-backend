@@ -1300,6 +1300,22 @@ function initGoogleAuth() {
     });
   }
 
+  // Hero Sign up with Google button
+  const heroGoogleBtn = document.getElementById('hero-google-auth-btn');
+  if (heroGoogleBtn) {
+    heroGoogleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (activeGoogleClientId && googleTokenClient) {
+        launchRealGoogleLogin();
+      } else {
+        const modal = document.getElementById('auth-dialog');
+        if (modal && typeof modal.showModal === 'function') modal.showModal();
+        const input = document.getElementById('input-google-client-id');
+        if (input) input.focus();
+      }
+    });
+  }
+
   // Header Sign Out button
   const signOutBtn = document.getElementById('header-signout-btn');
   if (signOutBtn) {
