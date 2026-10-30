@@ -1097,55 +1097,143 @@ window.handleGoogleCredentialResponse = function(response) {
   }
 };
 
-window.handleEmailSignIn = function() {
-  const emailInput = document.getElementById('auth-email-input');
-  const email = emailInput ? emailInput.value.trim() : '';
-  if (!email) return;
-  signInUser({
-    user: {
-      id: 'usr_' + btoa(email.toLowerCase()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16),
-      email: email.toLowerCase(),
-      name: email.split('@')[0],
-      picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email)}`
-    }
-  });
-};
+// ==========================================================================
+// FIGMA-GRADE GOOGLE ACCOUNT CHOOSER CONTROLLER
+// ==========================================================================
 
-function promptQuickGoogleLogin() {
-  const suggestedEmail = 'smartfxlabs@gmail.com';
-  const email = prompt('Sign in with Google Account to sync & persist saved leads:', suggestedEmail);
-  if (!email) return;
-  const name = email.split('@')[0].replace(/[._-]/g, ' ');
-  signInUser({
-    user: {
-      id: 'usr_goog_' + btoa(email.toLowerCase()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16),
-      email: email.toLowerCase(),
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      picture: `https://lh3.googleusercontent.com/a/default-user=s96-c`
+let deviceGoogleAccounts = [];
+try {
+  const saved = localStorage.getItem('xyz_device_google_accounts');
+  if (saved) {
+    deviceGoogleAccounts = JSON.parse(saved);
+  }
+} catch (e) {}
+
+if (!Array.isArray(deviceGoogleAccounts) || deviceGoogleAccounts.length === 0) {
+  deviceGoogleAccounts = [
+    {
+      id: 'usr_goog_smartfxlabs',
+      name: 'Smart FX Labs',
+      email: 'smartfxlabs@gmail.com',
+      picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
     }
+  ];
+}
+
+function saveDeviceAccounts() {
+  try {
+    localStorage.setItem('xyz_device_google_accounts', JSON.stringify(deviceGoogleAccounts));
+  } catch (e) {}
+}
+
+function renderGoogleAccountsList() {
+  const container = document.getElementById('google-accounts-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  deviceGoogleAccounts.forEach(account => {
+    const item = document.createElement('div');
+    item.className = 'google-account-item';
+    item.title = `Sign in as ${account.name} (${account.email})`;
+
+    const isCurrent = currentUser && currentUser.email === account.email;
+    const initial = (account.name || account.email).charAt(0).toUpperCase();
+
+    item.innerHTML = `
+      <img src="${account.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(account.name)}`}" 
+           alt="${escapeHtml(account.name)}" 
+           class="google-avatar-circle" 
+           onerror="this.onerror=null; this.outerHTML='<div class=\\'google-avatar-circle\\' style=\\'background: #1A73E8;\\'>${initial}</div>';" />
+      <div class="google-account-info">
+        <div style="display: flex; align-items: center;">
+          <span class="google-account-name">${escapeHtml(account.name)}</span>
+          ${isCurrent ? '<span class="google-account-tag">Signed in</span>' : ''}
+        </div>
+        <div class="google-account-email">${escapeHtml(account.email)}</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    `;
+
+    item.addEventListener('click', () => {
+      // Direct 1-click Google account login
+      signInUser({ user: account });
+    });
+
+    container.appendChild(item);
   });
 }
 
+window.handleCustomGoogleAccount = function() {
+  const emailInput = document.getElementById('google-email-input');
+  if (!emailInput) return;
+  const email = emailInput.value.trim().toLowerCase();
+  if (!email) return;
+
+  const rawName = email.split('@')[0].replace(/[._-]/g, ' ');
+  const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+  const newAccount = {
+    id: 'usr_goog_' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16),
+    name: name,
+    email: email,
+    picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
+  };
+
+  // Add to recognized device accounts if not already present
+  const exists = deviceGoogleAccounts.some(a => a.email === email);
+  if (!exists) {
+    deviceGoogleAccounts.push(newAccount);
+    saveDeviceAccounts();
+  }
+
+  // Reset input and hide form
+  emailInput.value = '';
+  const form = document.getElementById('google-custom-account-form');
+  const addBtn = document.getElementById('btn-use-another-account');
+  if (form) form.style.display = 'none';
+  if (addBtn) addBtn.style.display = 'flex';
+
+  signInUser({ user: newAccount });
+};
+
 function initGoogleAuth() {
-  // Google SSO Button click in modal
-  const googleBtn = document.getElementById('btn-google-sso');
-  if (googleBtn) {
-    googleBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Try GIS One Tap / Prompt if available
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        try {
-          window.google.accounts.id.prompt((notification) => {
-            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-              promptQuickGoogleLogin();
-            }
-          });
-          return;
-        } catch (e) {}
-      }
-      promptQuickGoogleLogin();
+  // Use Another Account button
+  const addAccountBtn = document.getElementById('btn-use-another-account');
+  const customForm = document.getElementById('google-custom-account-form');
+  const cancelBtn = document.getElementById('btn-cancel-custom-account');
+
+  if (addAccountBtn && customForm) {
+    addAccountBtn.addEventListener('click', () => {
+      addAccountBtn.style.display = 'none';
+      customForm.style.display = 'block';
+      const input = document.getElementById('google-email-input');
+      if (input) input.focus();
     });
   }
+
+  if (cancelBtn && customForm && addAccountBtn) {
+    cancelBtn.addEventListener('click', () => {
+      customForm.style.display = 'none';
+      addAccountBtn.style.display = 'flex';
+    });
+  }
+
+  // Open Auth modal trigger
+  const openButtons = document.querySelectorAll('.open-auth-modal');
+  openButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      renderGoogleAccountsList();
+      // Try GIS One Tap on mobile/PC if available
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.prompt();
+        } catch (e) {}
+      }
+    });
+  });
 
   // Header Sign Out button
   const signOutBtn = document.getElementById('header-signout-btn');
@@ -1181,4 +1269,7 @@ function initGoogleAuth() {
       renderTable();
     });
   }
+
+  // Initial render of accounts list
+  renderGoogleAccountsList();
 }
