@@ -4,6 +4,28 @@
  * Pitch Format Kit, CSV Export, and Pipeline Persistence.
  */
 
+// Direct backend URL for Render cloud fallback
+const RENDER_BACKEND_URL = 'https://leadfinder-backend-k1a9.onrender.com';
+
+/**
+ * Universal resilient API fetcher (supports local / Vercel proxy rewrite + direct Render fallback)
+ */
+async function callBackendApi(endpoint, options = {}) {
+  try {
+    const res = await fetch(endpoint, options);
+    if (res.ok) return res;
+    // If not found or gateway timeout, try direct Render backend
+    if (res.status === 404 || res.status === 502 || res.status === 503) {
+      console.warn(`[Proxy Fallback] Relative ${endpoint} failed (${res.status}), trying Render cloud direct...`);
+      return await fetch(`${RENDER_BACKEND_URL}${endpoint}`, options);
+    }
+    return res;
+  } catch (err) {
+    console.warn(`[Proxy Fallback] Network failed on relative endpoint, trying direct Render...`, err);
+    return await fetch(`${RENDER_BACKEND_URL}${endpoint}`, options);
+  }
+}
+
 // Initial verified baseline dataset for instant page load
 const INITIAL_BASELINE_LEADS = [
   {
@@ -322,7 +344,7 @@ async function executeAiPipeline({ prompt, niche, city, filter }) {
   }, 2200);
 
   try {
-    const res = await fetch('/api/leads/ai-pipeline', {
+    const res = await callBackendApi('/api/leads/ai-pipeline', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, niche, city, filter, count: 6 })
@@ -474,7 +496,7 @@ function initAngleRegenerator() {
     pitchBox.textContent = 'Generating bespoke consultative outreach angle via AI...';
 
     try {
-      const res = await fetch('/api/leads/custom-pitch', {
+      const res = await callBackendApi('/api/leads/custom-pitch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://leadfinder-backend-k1a9.onrender.com/api/:match*"
+    }
+  ]
+}
