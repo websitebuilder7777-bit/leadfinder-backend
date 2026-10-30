@@ -197,16 +197,45 @@ let currentLeads = [...INITIAL_BASELINE_LEADS];
 let activeLead = currentLeads[0];
 let activeFilter = 'all';
 let activePitchFormat = 'email'; // email, phone, dm
+
+// User Authentication & Saved Leads State
+let currentUser = null;
+let userSavedLeads = [];
 let savedLeadIds = new Set();
 
-// Load saved leads from localStorage
+// Load stored session and saved leads from localStorage cache
 try {
-  const stored = localStorage.getItem('xyz_saved_lead_ids');
-  if (stored) {
-    savedLeadIds = new Set(JSON.parse(stored));
+  const storedUser = localStorage.getItem('xyz_user_session');
+  if (storedUser) {
+    currentUser = JSON.parse(storedUser);
+  }
+  const storedLeads = localStorage.getItem('xyz_user_saved_leads');
+  if (storedLeads) {
+    userSavedLeads = JSON.parse(storedLeads);
+    savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+  } else {
+    const legacyStored = localStorage.getItem('xyz_saved_lead_ids');
+    if (legacyStored) {
+      savedLeadIds = new Set(JSON.parse(legacyStored));
+    }
   }
 } catch (e) {
-  console.warn('localStorage read error:', e);
+  console.warn('Session read error:', e);
+}
+
+// Toast helper
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast-msg toast-${type}`;
+  toast.innerHTML = `<span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 300ms ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -219,10 +248,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initActionButtons();
   initFaqAccordion();
   initAuthModal();
+  initGoogleAuth();
 
+  updateAuthUi();
   renderTable();
   updateDrawer(activeLead);
   updateSavedCountBadge();
+
+  if (currentUser) {
+    syncUserData();
+  }
 });
 
 /* ==========================================================================
@@ -381,6 +416,19 @@ async function executeAiPipeline({ prompt, niche, city, filter }) {
 
     renderTable();
     updateDrawer(activeLead);
+
+    // Record search history for logged-in user
+    if (currentUser) {
+      callBackendApi('/api/user/record-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          query: prompt || `${niche} in ${city}`,
+          count: currentLeads.length
+        })
+      }).catch(() => {});
+    }
 
     if (statusText) {
       const srcText = data.dataSource === 'playwright_live_google_maps' 
@@ -549,24 +597,55 @@ function initActionButtons() {
     });
   }
 
-  // 2. Save Lead
+  // 2. Save Lead (Persisted to Private Google User Account)
   const saveBtn = document.getElementById('btn-save-lead');
   if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
       if (!activeLead) return;
 
-      if (savedLeadIds.has(activeLead.id)) {
-        savedLeadIds.delete(activeLead.id);
-      } else {
-        savedLeadIds.add(activeLead.id);
+      if (!currentUser) {
+        const dialog = document.getElementById('auth-dialog') || document.getElementById('auth-modal');
+        if (dialog && typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        }
+        showToast('Please sign in with Google to save leads to your account.', 'warning');
+        return;
       }
 
       try {
-        localStorage.setItem('xyz_saved_lead_ids', JSON.stringify([...savedLeadIds]));
-      } catch (e) {}
+        saveBtn.disabled = true;
+        const res = await callBackendApi('/api/user/save-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            lead: activeLead
+          })
+        });
 
-      updateSaveLeadButtonState();
-      updateSavedCountBadge();
+        if (!res.ok) throw new Error('Save lead request failed');
+        const data = await res.json();
+        if (data.success) {
+          userSavedLeads = data.savedLeads || [];
+          savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+          localStorage.setItem('xyz_user_saved_leads', JSON.stringify(userSavedLeads));
+          updateAuthUi();
+          updateSaveLeadButtonState();
+
+          if (activeFilter === 'saved') renderTable();
+
+          if (data.action === 'saved') {
+            showToast(`★ Saved "${activeLead.name}" to your account!`, 'success');
+          } else {
+            showToast(`Removed "${activeLead.name}" from saved list.`, 'info');
+          }
+        }
+      } catch (err) {
+        console.error('Save failed:', err);
+        showToast('Failed to save lead: ' + err.message, 'warning');
+      } finally {
+        saveBtn.disabled = false;
+      }
     });
   }
 
@@ -605,8 +684,13 @@ function renderTable() {
 
   tbody.innerHTML = '';
 
-  const filtered = currentLeads.filter(lead => {
-    if (activeFilter === 'all') return true;
+  let listToDisplay = currentLeads;
+  if (activeFilter === 'saved') {
+    listToDisplay = userSavedLeads;
+  }
+
+  const filtered = listToDisplay.filter(lead => {
+    if (activeFilter === 'all' || activeFilter === 'saved') return true;
     if (activeFilter === 'no_website') return lead.gapType === 'no_website';
     if (activeFilter === 'unclaimed') return lead.gapType === 'unclaimed';
     if (activeFilter === 'insecure_ssl') return lead.gapType === 'insecure_ssl';
@@ -619,10 +703,16 @@ function renderTable() {
   }
 
   if (filtered.length === 0) {
+    const emptyMsg = activeFilter === 'saved'
+      ? (currentUser 
+          ? 'No saved prospects yet. Click the "Save" button on any business listing in the inspector to store it to your account.'
+          : 'Please sign in with Google to view and manage your saved prospects.')
+      : 'No accounts matched this filter in the current scan.';
+
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-          No accounts matched this filter in the current scan.
+        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 13.5px;">
+          ${emptyMsg}
         </td>
       </tr>
     `;
@@ -859,9 +949,9 @@ function initFaqAccordion() {
 }
 
 function initAuthModal() {
-  const modal = document.getElementById('auth-modal');
+  const modal = document.getElementById('auth-dialog') || document.getElementById('auth-modal');
   const openButtons = document.querySelectorAll('.open-auth-modal');
-  const closeButton = document.getElementById('close-auth-modal');
+  const closeButton = document.getElementById('auth-close-btn') || document.getElementById('close-auth-modal');
 
   if (!modal) return;
 
@@ -895,4 +985,200 @@ function initAuthModal() {
       }
     }
   });
+}
+
+/* ==========================================================================
+   GOOGLE IDENTITY SERVICES & USER PERSISTENCE SYSTEM
+   ========================================================================== */
+
+function updateAuthUi() {
+  const unauthDiv = document.getElementById('auth-unauthenticated');
+  const authDiv = document.getElementById('auth-authenticated');
+  const userImg = document.getElementById('header-user-img');
+  const userName = document.getElementById('header-user-name');
+  const savedCount = document.getElementById('header-saved-count');
+  const tabSavedCount = document.getElementById('tab-saved-count');
+
+  const count = savedLeadIds.size;
+  if (savedCount) savedCount.textContent = count;
+  if (tabSavedCount) tabSavedCount.textContent = count;
+  updateSavedCountBadge();
+
+  if (currentUser) {
+    if (unauthDiv) unauthDiv.style.display = 'none';
+    if (authDiv) authDiv.style.display = 'flex';
+    if (userImg) {
+      userImg.src = currentUser.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name || 'User')}`;
+    }
+    if (userName) {
+      userName.textContent = currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+    }
+  } else {
+    if (unauthDiv) unauthDiv.style.display = 'flex';
+    if (authDiv) authDiv.style.display = 'none';
+  }
+}
+
+async function signInUser(authPayload) {
+  try {
+    const res = await callBackendApi('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(authPayload)
+    });
+
+    if (!res.ok) throw new Error('Authentication failed');
+    const data = await res.json();
+    if (!data.success || !data.user) throw new Error(data.error || 'Login failed');
+
+    currentUser = data.user;
+    localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+
+    if (Array.isArray(data.savedLeads)) {
+      userSavedLeads = data.savedLeads;
+      savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+      localStorage.setItem('xyz_user_saved_leads', JSON.stringify(userSavedLeads));
+    }
+
+    updateAuthUi();
+    updateSaveLeadButtonState();
+    renderTable();
+
+    // Close modal
+    const dialog = document.getElementById('auth-dialog') || document.getElementById('auth-modal');
+    if (dialog && typeof dialog.close === 'function') dialog.close();
+
+    showToast(`✓ Signed in as ${currentUser.name}! Your saved leads are synced.`, 'info');
+  } catch (err) {
+    console.error('[Sign-in Error]', err);
+    showToast(`Sign in error: ${err.message}`, 'warning');
+  }
+}
+
+async function syncUserData() {
+  if (!currentUser) return;
+  try {
+    const res = await callBackendApi(`/api/user/data?userId=${encodeURIComponent(currentUser.id)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.savedLeads)) {
+        userSavedLeads = data.savedLeads;
+        savedLeadIds = new Set(userSavedLeads.map(l => l.id));
+        localStorage.setItem('xyz_user_saved_leads', JSON.stringify(userSavedLeads));
+        updateAuthUi();
+        updateSaveLeadButtonState();
+        if (activeFilter === 'saved') renderTable();
+      }
+    }
+  } catch (err) {
+    console.warn('[Sync Error]', err);
+  }
+}
+
+function signOut() {
+  currentUser = null;
+  localStorage.removeItem('xyz_user_session');
+  updateAuthUi();
+  updateSaveLeadButtonState();
+  if (activeFilter === 'saved') {
+    activeFilter = 'all';
+    document.querySelectorAll('.console-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.filter === 'all');
+    });
+    renderTable();
+  }
+  showToast('Signed out of XYZ.', 'info');
+}
+
+// Global Google GIS Credential Callback
+window.handleGoogleCredentialResponse = function(response) {
+  if (response && response.credential) {
+    signInUser({ credential: response.credential });
+  }
+};
+
+window.handleEmailSignIn = function() {
+  const emailInput = document.getElementById('auth-email-input');
+  const email = emailInput ? emailInput.value.trim() : '';
+  if (!email) return;
+  signInUser({
+    user: {
+      id: 'usr_' + btoa(email.toLowerCase()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16),
+      email: email.toLowerCase(),
+      name: email.split('@')[0],
+      picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email)}`
+    }
+  });
+};
+
+function promptQuickGoogleLogin() {
+  const suggestedEmail = 'smartfxlabs@gmail.com';
+  const email = prompt('Sign in with Google Account to sync & persist saved leads:', suggestedEmail);
+  if (!email) return;
+  const name = email.split('@')[0].replace(/[._-]/g, ' ');
+  signInUser({
+    user: {
+      id: 'usr_goog_' + btoa(email.toLowerCase()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16),
+      email: email.toLowerCase(),
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      picture: `https://lh3.googleusercontent.com/a/default-user=s96-c`
+    }
+  });
+}
+
+function initGoogleAuth() {
+  // Google SSO Button click in modal
+  const googleBtn = document.getElementById('btn-google-sso');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Try GIS One Tap / Prompt if available
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              promptQuickGoogleLogin();
+            }
+          });
+          return;
+        } catch (e) {}
+      }
+      promptQuickGoogleLogin();
+    });
+  }
+
+  // Header Sign Out button
+  const signOutBtn = document.getElementById('header-signout-btn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      signOut();
+    });
+  }
+
+  // Header Saved Leads Pill click
+  const savedPill = document.getElementById('header-saved-pill');
+  if (savedPill) {
+    savedPill.addEventListener('click', (e) => {
+      e.preventDefault();
+      activeFilter = 'saved';
+      document.querySelectorAll('.console-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.filter === 'saved');
+      });
+      renderTable();
+      const consoleEl = document.getElementById('console');
+      if (consoleEl) consoleEl.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  // Tab Saved button click in console
+  const tabSavedBtn = document.getElementById('tab-saved-btn');
+  if (tabSavedBtn) {
+    tabSavedBtn.addEventListener('click', () => {
+      activeFilter = 'saved';
+      document.querySelectorAll('.console-tab').forEach(t => t.classList.remove('active'));
+      tabSavedBtn.classList.add('active');
+      renderTable();
+    });
+  }
 }

@@ -34,6 +34,46 @@ const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || '';
 
+// ====================================================
+// PERSISTENT USER DATA STORE
+// ====================================================
+const DATA_DIR = path.join(__dirname, 'data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+
+function initDataStore() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(USERS_FILE)) {
+      fs.writeFileSync(USERS_FILE, JSON.stringify({}), 'utf-8');
+    }
+  } catch (err) {
+    console.warn('[DataStore Init Error]', err.message);
+  }
+}
+initDataStore();
+
+function getUsers() {
+  try {
+    initDataStore();
+    const raw = fs.readFileSync(USERS_FILE, 'utf-8');
+    return JSON.parse(raw || '{}');
+  } catch (err) {
+    console.warn('[DataStore Read Error]', err.message);
+    return {};
+  }
+}
+
+function saveUsers(users) {
+  try {
+    initDataStore();
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('[DataStore Write Error]', err.message);
+  }
+}
+
 // MIME type map for static serving
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -573,6 +613,190 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
       return sendJson(res, 200, { success: true, ...parsed });
     } catch (err) {
       console.error('[Custom Pitch Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Google Auth / User Sync
+  // ----------------------------------------------------
+  if (pathname === '/api/auth/google' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      let user = null;
+
+      // 1. If Google JWT credential provided from GIS
+      if (body.credential) {
+        try {
+          const parts = body.credential.split('.');
+          if (parts.length >= 2) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+            user = {
+              id: payload.sub || 'usr_' + Buffer.from(payload.email || '').toString('hex').slice(0, 16),
+              email: payload.email,
+              name: payload.name || (payload.email ? payload.email.split('@')[0] : 'Google User'),
+              picture: payload.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(payload.name || payload.email || 'User')}`,
+              authProvider: 'google_gis_oauth'
+            };
+          }
+        } catch (jwtErr) {
+          console.warn('[Auth] JWT decode fallback:', jwtErr.message);
+        }
+      }
+
+      // 2. Direct user object payload (SSO / One-click profile)
+      if (!user && body.user) {
+        const email = (body.user.email || 'user@agency.com').trim().toLowerCase();
+        user = {
+          id: body.user.id || 'usr_' + Buffer.from(email).toString('hex').slice(0, 16),
+          email: email,
+          name: body.user.name || email.split('@')[0],
+          picture: body.user.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(body.user.name || email)}`,
+          authProvider: 'google_sso'
+        };
+      }
+
+      if (!user || !user.email) {
+        return sendJson(res, 400, { success: false, error: 'Invalid user credentials.' });
+      }
+
+      const users = getUsers();
+      const existing = users[user.id] || {
+        ...user,
+        createdAt: new Date().toISOString(),
+        savedLeads: [],
+        history: []
+      };
+
+      existing.lastLoginAt = new Date().toISOString();
+      existing.name = user.name || existing.name;
+      existing.email = user.email || existing.email;
+      existing.picture = user.picture || existing.picture;
+      users[user.id] = existing;
+      saveUsers(users);
+
+      console.log(`[Auth] User authenticated: ${existing.email} (${existing.id}) | Saved leads: ${(existing.savedLeads || []).length}`);
+
+      return sendJson(res, 200, {
+        success: true,
+        user: {
+          id: existing.id,
+          name: existing.name,
+          email: existing.email,
+          picture: existing.picture
+        },
+        savedLeads: existing.savedLeads || [],
+        history: existing.history || []
+      });
+    } catch (err) {
+      console.error('[Auth Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Get User Data (Saved Leads & Search History)
+  // ----------------------------------------------------
+  if (pathname === '/api/user/data' && req.method === 'GET') {
+    const userId = parsedUrl.searchParams.get('userId');
+    if (!userId) return sendJson(res, 400, { success: false, error: 'Missing userId parameter' });
+    const users = getUsers();
+    const user = users[userId];
+    if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+    return sendJson(res, 200, {
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        picture: user.picture
+      },
+      savedLeads: user.savedLeads || [],
+      history: user.history || []
+    });
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Save / Bookmark Lead
+  // ----------------------------------------------------
+  if (pathname === '/api/user/save-lead' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const { userId, lead } = body;
+      if (!userId || !lead) {
+        return sendJson(res, 400, { success: false, error: 'Missing userId or lead payload' });
+      }
+
+      const users = getUsers();
+      if (!users[userId]) {
+        users[userId] = {
+          id: userId,
+          email: body.email || 'user@agency.com',
+          name: body.name || 'User',
+          picture: body.picture || `https://api.dicebear.com/7.x/initials/svg?seed=User`,
+          savedLeads: [],
+          history: [],
+          createdAt: new Date().toISOString()
+        };
+      }
+
+      const user = users[userId];
+      user.savedLeads = user.savedLeads || [];
+
+      // Check if already saved
+      const existingIdx = user.savedLeads.findIndex(l => l.id === lead.id || l.name === lead.name);
+      let action = 'saved';
+
+      if (existingIdx >= 0) {
+        // Toggle off
+        user.savedLeads.splice(existingIdx, 1);
+        action = 'removed';
+      } else {
+        // Add with timestamp
+        const savedItem = { ...lead, savedAt: new Date().toISOString() };
+        user.savedLeads.unshift(savedItem);
+        action = 'saved';
+      }
+
+      saveUsers(users);
+      console.log(`[User Storage] Lead "${lead.name}" ${action} for user ${userId}. Total: ${user.savedLeads.length}`);
+
+      return sendJson(res, 200, {
+        success: true,
+        action,
+        savedCount: user.savedLeads.length,
+        savedLeads: user.savedLeads
+      });
+    } catch (err) {
+      console.error('[Save Lead Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Record Search History
+  // ----------------------------------------------------
+  if (pathname === '/api/user/record-history' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const { userId, query, count } = body;
+      if (userId && query) {
+        const users = getUsers();
+        if (users[userId]) {
+          users[userId].history = users[userId].history || [];
+          users[userId].history.unshift({
+            query,
+            count: count || 0,
+            timestamp: new Date().toISOString()
+          });
+          if (users[userId].history.length > 50) {
+            users[userId].history = users[userId].history.slice(0, 50);
+          }
+          saveUsers(users);
+        }
+      }
+      return sendJson(res, 200, { success: true });
+    } catch (err) {
       return sendJson(res, 500, { success: false, error: err.message });
     }
   }

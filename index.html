@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Google Identity Services (GIS) Official SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -44,10 +47,42 @@
           </ul>
         </nav>
 
-        <!-- Right Header Actions -->
+        <!-- Right Header Actions (Auth States) -->
         <div class="header-ctas">
-          <button class="login-link open-auth-modal">Sign in</button>
-          <a href="#console" class="btn-pill-black">Start Finding Leads</a>
+          <!-- Unauthenticated State -->
+          <div id="auth-unauthenticated" style="display: flex; align-items: center; gap: 12px;">
+            <button class="login-link open-auth-modal" id="header-signin-btn" style="display: flex; align-items: center; gap: 6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+              </svg>
+              <span>Sign in</span>
+            </button>
+            <a href="#console" class="btn-pill-black">Start Finding Leads</a>
+          </div>
+
+          <!-- Authenticated State -->
+          <div id="auth-authenticated" style="display: none; align-items: center; gap: 12px;">
+            <button class="btn-saved-leads-pill" id="header-saved-pill" title="View Saved Prospects">
+              <span style="color: #F59E0B;">★</span>
+              <span>Saved (<span id="header-saved-count">0</span>)</span>
+            </button>
+            <div class="user-profile-badge" id="header-user-badge" title="Authenticated with Google">
+              <div class="user-avatar-wrap">
+                <img id="header-user-img" src="" alt="Google Avatar" class="user-avatar" />
+                <span class="user-status-dot"></span>
+              </div>
+              <span id="header-user-name" class="user-name">User</span>
+            </div>
+            <button class="btn-logout" id="header-signout-btn" title="Sign Out">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+              </svg>
+              <span>Sign out</span>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -312,6 +347,9 @@
               <button class="console-tab" data-filter="unclaimed">Unclaimed GMB</button>
               <button class="console-tab" data-filter="insecure_ssl">Insecure SSL</button>
               <button class="console-tab" data-filter="critical">High Score (90+)</button>
+              <button class="console-tab tab-saved" data-filter="saved" id="tab-saved-btn">
+                <span style="color: #F59E0B; margin-right: 4px;">★</span>Saved Prospects (<span id="tab-saved-count">0</span>)
+              </button>
             </div>
 
             <div class="console-actions-group">
@@ -708,15 +746,21 @@
     </div>
   </footer>
 
-  <!-- NATIVE ACCESSIBLE AUTH MODAL (Google & Microsoft SSO) -->
+  <!-- NATIVE ACCESSIBLE AUTH MODAL (Google SSO & User Data Persistence) -->
   <dialog class="native-modal" id="auth-dialog" aria-labelledby="modal-auth-title">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-      <h3 style="font-size: 18px; font-weight: 700; color: var(--text-black);" id="modal-auth-title">Sign in to XYZ</h3>
-      <button id="auth-close-btn" style="background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--text-muted);" aria-label="Close modal">✕</button>
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;">
+      <div>
+        <h3 style="font-size: 18px; font-weight: 700; color: var(--text-black); margin-bottom: 4px;" id="modal-auth-title">Sign in to Save Leads</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Sync saved accounts, digital audits, and pitches securely to your account.</p>
+      </div>
+      <button id="auth-close-btn" style="background: transparent; border: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--text-muted); padding: 4px;" aria-label="Close modal">✕</button>
     </div>
 
-    <!-- Google SSO -->
-    <button class="sso-auth-btn" style="width: 100%; margin-bottom: 10px;" onclick="alert('Connected to Google SSO authentication.'); document.getElementById('auth-dialog').close();">
+    <!-- Google Identity Services Official Container -->
+    <div id="g_id_signin_button" style="display: flex; justify-content: center; margin-bottom: 12px; min-height: 40px;"></div>
+
+    <!-- Interactive Google Sign-In Button -->
+    <button class="sso-auth-btn sso-google-btn" id="btn-google-sso" style="width: 100%; margin-bottom: 12px;">
       <svg width="18" height="18" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
         <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
@@ -726,28 +770,20 @@
       <span>Continue with Google</span>
     </button>
 
-    <!-- Microsoft SSO -->
-    <button class="sso-auth-btn" style="width: 100%; margin-bottom: 18px;" onclick="alert('Connected to Microsoft SSO authentication.'); document.getElementById('auth-dialog').close();">
-      <svg width="18" height="18" viewBox="0 0 21 21">
-        <path fill="#f25022" d="M1 1h9v9H1z"/>
-        <path fill="#00a4ef" d="M1 11h9v9H1z"/>
-        <path fill="#7fba00" d="M11 1h9v9h-9z"/>
-        <path fill="#ffb900" d="M11 11h9v9h-9z"/>
-      </svg>
-      <span>Continue with Microsoft</span>
-    </button>
+    <div class="sso-divider-row" style="margin: 14px 0;">or sign in with agency email</div>
 
-    <div class="sso-divider-row" style="margin: 14px 0;">or work email</div>
-
-    <form onsubmit="event.preventDefault(); alert('Login link dispatched.'); document.getElementById('auth-dialog').close();">
-      <input type="email" placeholder="name@agency.com" style="width: 100%; height: 44px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0 14px; margin-bottom: 12px; font-family: inherit; font-size: 14px; outline: none;" required>
-      <button type="submit" class="btn-signup-submit" style="width: 100%; height: 44px;">Send Login Link</button>
+    <form id="email-auth-form" onsubmit="event.preventDefault(); window.handleEmailSignIn && window.handleEmailSignIn();">
+      <input type="email" id="auth-email-input" placeholder="name@agency.com or your email" style="width: 100%; height: 44px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0 14px; margin-bottom: 12px; font-family: inherit; font-size: 14px; outline: none;" required>
+      <button type="submit" class="btn-signup-submit" style="width: 100%; height: 44px;">Sign In & Sync Leads</button>
     </form>
 
-    <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 14px;">
-      25 free prospect evaluations credited automatically upon authorization.
+    <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 14px; line-height: 1.5;">
+      🛡️ Authenticated with Google SSO. All saved prospects and pitch diagnostics are securely synced to your private account.
     </div>
   </dialog>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>
