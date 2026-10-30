@@ -2060,4 +2060,29 @@ dialog.native-modal::backdrop {
   color: #202124;
 }
 
+.real-google-oauth-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #FFFFFF;
+  color: #3C4043;
+  border: 1px solid #DADCE0;
+  border-radius: 24px;
+  padding: 12px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+  transition: all 150ms ease;
+}
+
+.real-google-oauth-btn:hover {
+  background: #F8F9FA;
+  border-color: #D2E3FC;
+  box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+}
+
 

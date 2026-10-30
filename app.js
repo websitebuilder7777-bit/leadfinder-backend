@@ -1098,142 +1098,207 @@ window.handleGoogleCredentialResponse = function(response) {
 };
 
 // ==========================================================================
-// FIGMA-GRADE GOOGLE ACCOUNT CHOOSER CONTROLLER
+// REAL GOOGLE OAUTH 2.0 LIVE CONTROLLER
 // ==========================================================================
 
-let deviceGoogleAccounts = [];
-try {
-  const saved = localStorage.getItem('xyz_device_google_accounts');
-  if (saved) {
-    deviceGoogleAccounts = JSON.parse(saved);
-  }
-} catch (e) {}
+let googleTokenClient = null;
+let activeGoogleClientId = '';
 
-if (!Array.isArray(deviceGoogleAccounts) || deviceGoogleAccounts.length === 0) {
-  deviceGoogleAccounts = [
-    {
-      id: 'usr_goog_smartfxlabs',
-      name: 'Smart FX Labs',
-      email: 'smartfxlabs@gmail.com',
-      picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-    }
-  ];
-}
-
-function saveDeviceAccounts() {
+async function fetchAndInitGoogleOAuth() {
+  // 1. Check local storage override first
   try {
-    localStorage.setItem('xyz_device_google_accounts', JSON.stringify(deviceGoogleAccounts));
+    const localId = localStorage.getItem('xyz_google_client_id');
+    if (localId) {
+      activeGoogleClientId = localId.trim();
+    }
   } catch (e) {}
+
+  // 2. Check backend config if not in localStorage
+  if (!activeGoogleClientId) {
+    try {
+      const res = await callBackendApi('/api/config');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.googleClientId) {
+          activeGoogleClientId = data.googleClientId.trim();
+        }
+      }
+    } catch (e) {
+      console.warn('[Config] Failed to fetch /api/config:', e);
+    }
+  }
+
+  // 3. Update dialog status & input
+  const inputEl = document.getElementById('input-google-client-id');
+  const statusEl = document.getElementById('oauth-status-indicator');
+  if (inputEl && activeGoogleClientId) inputEl.value = activeGoogleClientId;
+  if (statusEl) {
+    statusEl.textContent = activeGoogleClientId 
+      ? '🟢 Google OAuth Client Connected' 
+      : '🔑 Google Cloud OAuth Connection';
+  }
+
+  if (activeGoogleClientId) {
+    initRealGoogleOAuth(activeGoogleClientId);
+  }
 }
 
-function renderGoogleAccountsList() {
-  const container = document.getElementById('google-accounts-container');
-  if (!container) return;
+function initRealGoogleOAuth(clientId) {
+  if (!clientId) return;
+  activeGoogleClientId = clientId;
 
-  container.innerHTML = '';
+  const statusEl = document.getElementById('oauth-status-indicator');
+  if (statusEl) statusEl.textContent = '🟢 Google OAuth Client Connected';
 
-  deviceGoogleAccounts.forEach(account => {
-    const item = document.createElement('div');
-    item.className = 'google-account-item';
-    item.title = `Sign in as ${account.name} (${account.email})`;
-
-    const isCurrent = currentUser && currentUser.email === account.email;
-    const initial = (account.name || account.email).charAt(0).toUpperCase();
-
-    item.innerHTML = `
-      <img src="${account.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(account.name)}`}" 
-           alt="${escapeHtml(account.name)}" 
-           class="google-avatar-circle" 
-           onerror="this.onerror=null; this.outerHTML='<div class=\\'google-avatar-circle\\' style=\\'background: #1A73E8;\\'>${initial}</div>';" />
-      <div class="google-account-info">
-        <div style="display: flex; align-items: center;">
-          <span class="google-account-name">${escapeHtml(account.name)}</span>
-          ${isCurrent ? '<span class="google-account-tag">Signed in</span>' : ''}
-        </div>
-        <div class="google-account-email">${escapeHtml(account.email)}</div>
-      </div>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2">
-        <path d="M9 18l6-6-6-6"/>
-      </svg>
-    `;
-
-    item.addEventListener('click', () => {
-      // Direct 1-click Google account login
-      signInUser({ user: account });
-    });
-
-    container.appendChild(item);
-  });
-}
-
-window.handleCustomGoogleAccount = function() {
-  const emailInput = document.getElementById('google-email-input');
-  if (!emailInput) return;
-  const email = emailInput.value.trim().toLowerCase();
-  if (!email) return;
-
-  const rawName = email.split('@')[0].replace(/[._-]/g, ' ');
-  const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-
-  const newAccount = {
-    id: 'usr_goog_' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16),
-    name: name,
-    email: email,
-    picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
-  };
-
-  // Add to recognized device accounts if not already present
-  const exists = deviceGoogleAccounts.some(a => a.email === email);
-  if (!exists) {
-    deviceGoogleAccounts.push(newAccount);
-    saveDeviceAccounts();
+  if (!window.google || !window.google.accounts) {
+    console.warn('[Google OAuth] Google GIS SDK not yet loaded.');
+    return;
   }
 
-  // Reset input and hide form
-  emailInput.value = '';
-  const form = document.getElementById('google-custom-account-form');
-  const addBtn = document.getElementById('btn-use-another-account');
-  if (form) form.style.display = 'none';
-  if (addBtn) addBtn.style.display = 'flex';
+  // 1. Initialize Official OAuth2 Token Client (Real accounts.google.com popup)
+  if (window.google.accounts.oauth2) {
+    googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'email profile openid',
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          try {
+            showToast('Verifying identity with Google servers...', 'info');
+            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+            });
+            const googleUser = await res.json();
+            console.log('[Google Profile Verified]', googleUser);
 
-  signInUser({ user: newAccount });
-};
+            if (googleUser && googleUser.email) {
+              await signInUser({
+                user: {
+                  id: googleUser.sub,
+                  email: googleUser.email,
+                  name: googleUser.name || googleUser.email.split('@')[0],
+                  picture: googleUser.picture,
+                  authProvider: 'google_oauth2_live'
+                }
+              });
 
-function initGoogleAuth() {
-  // Use Another Account button
-  const addAccountBtn = document.getElementById('btn-use-another-account');
-  const customForm = document.getElementById('google-custom-account-form');
-  const cancelBtn = document.getElementById('btn-cancel-custom-account');
-
-  if (addAccountBtn && customForm) {
-    addAccountBtn.addEventListener('click', () => {
-      addAccountBtn.style.display = 'none';
-      customForm.style.display = 'block';
-      const input = document.getElementById('google-email-input');
-      if (input) input.focus();
-    });
-  }
-
-  if (cancelBtn && customForm && addAccountBtn) {
-    cancelBtn.addEventListener('click', () => {
-      customForm.style.display = 'none';
-      addAccountBtn.style.display = 'flex';
-    });
-  }
-
-  // Open Auth modal trigger
-  const openButtons = document.querySelectorAll('.open-auth-modal');
-  openButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      renderGoogleAccountsList();
-      // Try GIS One Tap on mobile/PC if available
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        try {
-          window.google.accounts.id.prompt();
-        } catch (e) {}
+              // Close modal
+              const modal = document.getElementById('auth-dialog');
+              if (modal && typeof modal.close === 'function') modal.close();
+            }
+          } catch (err) {
+            console.error('[Google UserInfo Error]', err);
+            showToast('Google profile verification error: ' + err.message, 'warning');
+          }
+        } else if (tokenResponse && tokenResponse.error) {
+          console.warn('[Google OAuth Response Error]', tokenResponse);
+          showToast('Google authentication cancelled or closed.', 'info');
+        }
       }
     });
-  });
+  }
+
+  // 2. Render Official Google Identity Services Button
+  if (window.google.accounts.id) {
+    try {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (credentialResponse) => {
+          if (credentialResponse && credentialResponse.credential) {
+            signInUser({ credential: credentialResponse.credential });
+            const modal = document.getElementById('auth-dialog');
+            if (modal && typeof modal.close === 'function') modal.close();
+          }
+        }
+      });
+
+      const btnContainer = document.getElementById('real-google-gsi-btn');
+      if (btnContainer) {
+        btnContainer.innerHTML = '';
+        window.google.accounts.id.renderButton(btnContainer, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          width: 320
+        });
+      }
+    } catch (e) {
+      console.warn('[GIS Init Error]', e);
+    }
+  }
+}
+
+function launchRealGoogleLogin() {
+  if (!activeGoogleClientId) {
+    const modal = document.getElementById('auth-dialog');
+    if (modal && typeof modal.showModal === 'function') modal.showModal();
+    showToast('Enter your Google Cloud OAuth Client ID to open the live Google sign-in window.', 'info');
+    return;
+  }
+
+  if (!googleTokenClient && window.google && window.google.accounts && window.google.accounts.oauth2) {
+    initRealGoogleOAuth(activeGoogleClientId);
+  }
+
+  if (googleTokenClient) {
+    // This pops up the authentic https://accounts.google.com window!
+    googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+  } else {
+    // Fallback: try GIS prompt
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      showToast('Google OAuth SDK is loading. Please try again in 2 seconds.', 'info');
+    }
+  }
+}
+
+function initGoogleAuth() {
+  // Connect Client ID button
+  const saveClientIdBtn = document.getElementById('btn-save-client-id');
+  const inputClientId = document.getElementById('input-google-client-id');
+
+  if (saveClientIdBtn && inputClientId) {
+    saveClientIdBtn.addEventListener('click', () => {
+      const val = inputClientId.value.trim();
+      if (!val) {
+        alert('Please enter a valid Google Cloud OAuth Client ID.');
+        return;
+      }
+      try {
+        localStorage.setItem('xyz_google_client_id', val);
+      } catch (e) {}
+      activeGoogleClientId = val;
+      initRealGoogleOAuth(val);
+      showToast('✓ Client ID connected! Launching Google Sign-in...', 'info');
+      setTimeout(() => {
+        launchRealGoogleLogin();
+      }, 500);
+    });
+  }
+
+  // Real Google OAuth Button inside modal
+  const launchBtn = document.getElementById('btn-launch-real-google');
+  if (launchBtn) {
+    launchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      launchRealGoogleLogin();
+    });
+  }
+
+  // Header Sign In button
+  const headerSignInBtn = document.getElementById('header-signin-btn');
+  if (headerSignInBtn) {
+    headerSignInBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (activeGoogleClientId && googleTokenClient) {
+        launchRealGoogleLogin();
+      } else {
+        const modal = document.getElementById('auth-dialog');
+        if (modal && typeof modal.showModal === 'function') modal.showModal();
+      }
+    });
+  }
 
   // Header Sign Out button
   const signOutBtn = document.getElementById('header-signout-btn');
@@ -1270,6 +1335,13 @@ function initGoogleAuth() {
     });
   }
 
-  // Initial render of accounts list
-  renderGoogleAccountsList();
+  // Fetch client ID and initialize
+  fetchAndInitGoogleOAuth();
+
+  // Retry init after 1.5s in case Google script finished loading late
+  setTimeout(() => {
+    if (activeGoogleClientId && !googleTokenClient) {
+      initRealGoogleOAuth(activeGoogleClientId);
+    }
+  }, 1500);
 }

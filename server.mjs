@@ -34,6 +34,7 @@ loadEnv();
 const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || '';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
 // ====================================================
 // PERSISTENT USER DATA STORE
@@ -531,7 +532,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = parsedUrl.pathname;
 
   // ----------------------------------------------------
-  // API ROUTE: Health Check
+  // API ROUTE: Health & Config
   // ----------------------------------------------------
   if (pathname === '/api/health' && req.method === 'GET') {
     return sendJson(res, 200, {
@@ -539,7 +540,14 @@ const server = http.createServer(async (req, res) => {
       engine: 'XYZ Enterprise AI + Google Maps Pipeline',
       playwrightActive: true,
       placesApiConfigured: Boolean(GOOGLE_MAPS_API_KEY),
-      geminiKeyConfigured: Boolean(GEMINI_API_KEY)
+      geminiKeyConfigured: Boolean(GEMINI_API_KEY),
+      googleOAuthClientConfigured: Boolean(GOOGLE_CLIENT_ID)
+    });
+  }
+
+  if (pathname === '/api/config' && req.method === 'GET') {
+    return sendJson(res, 200, {
+      googleClientId: GOOGLE_CLIENT_ID
     });
   }
 

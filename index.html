@@ -746,7 +746,7 @@
     </div>
   </footer>
 
-  <!-- FIGMA-GRADE GOOGLE ACCOUNT SIGN IN MODAL -->
+  <!-- REAL GOOGLE OAUTH 2.0 LIVE SIGN-IN MODAL -->
   <dialog class="google-auth-dialog" id="auth-dialog" aria-labelledby="google-auth-heading">
     <div class="google-dialog-container">
       
@@ -765,8 +765,8 @@
         </svg>
       </div>
 
-      <!-- Header: Choose an account -->
-      <h2 id="google-auth-heading" class="google-dialog-title">Choose an account</h2>
+      <!-- Header -->
+      <h2 id="google-auth-heading" class="google-dialog-title">Sign in with Google</h2>
       <p class="google-dialog-subtitle">
         <span>to continue to</span>
         <span class="google-app-pill">
@@ -777,40 +777,46 @@
         </span>
       </p>
 
-      <!-- Dynamic Google Accounts List on Device -->
-      <div class="google-accounts-list" id="google-accounts-container">
-        <!-- Rendered dynamically by app.js -->
+      <!-- Main Action: Real Google OAuth Popup Launcher -->
+      <button class="real-google-oauth-btn" id="btn-launch-real-google" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+        </svg>
+        <span>Continue with Google (Live OAuth Popup)</span>
+      </button>
+
+      <!-- Official Google Identity Services Render Container -->
+      <div id="real-google-gsi-btn" style="display: flex; justify-content: center; margin: 12px 0;"></div>
+
+      <!-- Google Cloud Client ID Configuration Section -->
+      <div class="oauth-config-card" style="margin-top: 18px; padding: 16px; background: #F8F9FA; border: 1px solid #DADCE0; border-radius: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 13px; font-weight: 700; color: #202124;" id="oauth-status-indicator">🔑 Google Cloud OAuth Connection</span>
+        </div>
+        <p style="font-size: 12px; color: #5F6368; line-height: 1.45; margin: 4px 0 10px;">
+          To open the real <strong>accounts.google.com</strong> popup with your Google password, 2FA & phone recovery, enter your Google Cloud Web Client ID:
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="input-google-client-id" class="google-text-input" placeholder="e.g. 544875542884-xxxx.apps.googleusercontent.com" style="height: 38px; font-size: 12px; flex: 1;" />
+          <button type="button" class="google-btn-primary" id="btn-save-client-id" style="height: 38px; padding: 0 16px; font-size: 13px; white-space: nowrap;">Connect</button>
+        </div>
+        <div style="margin-top: 10px; font-size: 11.5px; color: #70757A; line-height: 1.4;">
+          👉 <strong>Quick setup in your Google Cloud project (544875542884):</strong>
+          <ol style="margin: 4px 0 0 16px; padding: 0;">
+            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #1A73E8; font-weight: 600;">Google Cloud Console &gt; Credentials</a>.</li>
+            <li>Click <strong>+ CREATE CREDENTIALS</strong> &rarr; <strong>OAuth client ID</strong> &rarr; <strong>Web application</strong>.</li>
+            <li>Add <code>https://leadfinder-app-roan.vercel.app</code> to <em>Authorized JavaScript origins</em>.</li>
+            <li>Paste your Client ID above and click <strong>Connect</strong>.</li>
+          </ol>
+        </div>
       </div>
 
-      <!-- Use Another Account Option -->
-      <div class="google-account-item" id="btn-use-another-account">
-        <div class="google-avatar-circle google-add-account-circle">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F6368" stroke-width="2.2" stroke-linecap="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="8.5" cy="7" r="4"/>
-            <line x1="20" y1="8" x2="20" y2="14"/>
-            <line x1="23" y1="11" x2="17" y2="11"/>
-          </svg>
-        </div>
-        <div class="google-account-info">
-          <div class="google-account-name" style="color: #3C4043; font-weight: 500;">Use another account</div>
-        </div>
-      </div>
-
-      <!-- Inline Google Email Form (expands when "Use another account" clicked) -->
-      <form id="google-custom-account-form" class="google-custom-form" style="display: none;" onsubmit="event.preventDefault(); window.handleCustomGoogleAccount && window.handleCustomGoogleAccount();">
-        <div class="google-input-wrapper">
-          <input type="email" id="google-email-input" class="google-text-input" placeholder="Email or phone" required autocomplete="email">
-        </div>
-        <div class="google-form-actions">
-          <button type="button" class="google-btn-text" id="btn-cancel-custom-account">Back</button>
-          <button type="submit" class="google-btn-primary">Next</button>
-        </div>
-      </form>
-
-      <!-- Google Legal & Consent Notice -->
-      <div class="google-consent-notice">
-        To continue, Google will share your name, email address, language preference, and profile picture with <strong>XYZ.io</strong>. Before using this app, review XYZ.io’s <a href="#" onclick="alert('XYZ.io respects your privacy and secures all saved leads.'); return false;">Privacy Policy</a> and <a href="#" onclick="return false;">Terms of Service</a>.
+      <!-- Legal Notice -->
+      <div class="google-consent-notice" style="margin-top: 14px; font-size: 11px;">
+        Google will authenticate your identity directly on <strong>accounts.google.com</strong>. Your password never touches our servers.
       </div>
 
       <!-- Bottom Google System Strip -->
