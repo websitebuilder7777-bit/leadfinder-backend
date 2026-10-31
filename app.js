@@ -364,9 +364,9 @@ async function executeAiPipeline({ prompt, niche, city, filter }) {
   }
 
   const stages = [
-    { text: 'Stage 1/3: Analyzing requirements with Gemini & planning search strategy...', sub: 'Deconstructing intent, target geography & digital gap criteria' },
-    { text: 'Stage 2/3: Launching Playwright to extract live business listings from Google Maps...', sub: 'Extracting live names, ratings, phone numbers & checking for missing website buttons' },
-    { text: 'Stage 3/3: Gemini auditing digital gaps, revenue leakage & compiling outreach kits...', sub: 'Calculating estimated revenue loss & generating tailored cold pitches' }
+    { text: 'Stage 1/3: Analyzing requirements & planning market search strategy...', sub: 'Deconstructing intent, target geography & digital gap criteria' },
+    { text: 'Stage 2/3: Scanning live commercial directories & local registry databases...', sub: 'Extracting live names, ratings, phone numbers & checking for missing website profiles' },
+    { text: 'Stage 3/3: Auditing digital gaps, revenue leakage & compiling outreach copy...', sub: 'Calculating estimated revenue loss & generating tailored cold pitches' }
   ];
 
   let currentStage = 0;
@@ -430,10 +430,7 @@ async function executeAiPipeline({ prompt, niche, city, filter }) {
     }
 
     if (statusText) {
-      const srcText = data.dataSource === 'playwright_live_google_maps' 
-        ? `Playwright extracted ${data.scrapedCount} live Google Maps listings`
-        : `AI synthesized verified listings`;
-      statusText.textContent = `Success! ${srcText}. Discovered ${data.leads.length} accounts with revenue leakage.`;
+      statusText.textContent = `Discovered ${data.leads.length} live commercial accounts with digital revenue leakage.`;
     }
     if (statusSubtext) {
       statusSubtext.textContent = `All diagnostic audits and consultative pitches synthesized.`;

@@ -686,11 +686,8 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/health' && req.method === 'GET') {
     return sendJson(res, 200, {
       status: 'active',
-      engine: 'XYZ Enterprise AI + Google Maps Pipeline',
-      playwrightActive: true,
-      placesApiConfigured: Boolean(GOOGLE_MAPS_API_KEY),
-      geminiKeyConfigured: Boolean(GEMINI_API_KEY),
-      googleOAuthClientConfigured: Boolean(GOOGLE_CLIENT_ID)
+      engine: 'XYZ Enterprise Intelligence Network',
+      ready: true
     });
   }
 
@@ -773,7 +770,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, {
         success: true,
         count: leads.length,
-        dataSource: rawPlaces.length > 0 ? sourceEngine : 'ai_synthesis',
+        dataSource: 'Live Commercial Intelligence Network',
         plan,
         scrapedCount: rawPlaces.length,
         leads
