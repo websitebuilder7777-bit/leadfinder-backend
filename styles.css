@@ -2595,4 +2595,620 @@ dialog.native-modal::backdrop {
   background: #3730A3;
 }
 
+/* ==========================================================================
+   DAY / NIGHT THEME SWITCHER & NIGHT MODE SYSTEM
+   ========================================================================== */
+
+.theme-switch-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 2px;
+  user-select: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.theme-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.theme-switch-btn:hover {
+  color: #0F172A;
+}
+
+.theme-switch-btn.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.theme-switch-btn svg {
+  flex-shrink: 0;
+}
+
+/* Base Smooth Transition for Theme Switch */
+body, .site-header, .console-card, .drawer-card, .impact-quote-card, .methodology-card, .pricing-card, .faq-item, .hero-signup-box, .ai-scanner-panel {
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease;
+}
+
+/* ==========================================================================
+   NIGHT THEME OVERRIDES (DATA-THEME="NIGHT" / .NIGHT-THEME)
+   ========================================================================== */
+
+html[data-theme="night"],
+body.night-theme {
+  color-scheme: dark;
+  --color-canvas: #0A0A0A;
+  --color-white: #111111;
+  --color-surface-soft: #141414;
+  --color-surface-muted: #1A1A1A;
+  --color-surface-subtle: #202020;
+
+  --text-black: #FFFFFF;
+  --text-primary: #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --text-dim: #4B5563;
+
+  --border-light: #262626;
+  --border-subtle: #1F1F1F;
+  --border-medium: #333333;
+  --border-navy: rgba(59, 130, 246, 0.35);
+
+  --navy-950: #020617;
+  --navy-900: #60A5FA;
+  --navy-850: #3B82F6;
+  --navy-800: #2563EB;
+  --navy-700: #3B82F6;
+  --navy-600: #60A5FA;
+  --navy-100: #1E293B;
+  --navy-50: #0F172A;
+
+  --black-primary: #2563EB;
+  --black-card: #141414;
+}
+
+/* Night Mode Switcher Styling */
+html[data-theme="night"] .theme-switch-pill {
+  background: #141414;
+  border-color: #2E2E2E;
+}
+
+html[data-theme="night"] .theme-switch-btn {
+  color: #94A3B8;
+}
+
+html[data-theme="night"] .theme-switch-btn:hover {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .theme-switch-btn.active {
+  background: #262626;
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Header & Nav */
+html[data-theme="night"] .site-header {
+  background: rgba(10, 10, 10, 0.94);
+  border-bottom: 1px solid #1F1F1F;
+}
+
+html[data-theme="night"] .brand-link {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .brand-icon-box {
+  background: #1D4ED8;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .brand-title {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .brand-title span {
+  color: #60A5FA;
+}
+
+html[data-theme="night"] .nav-link {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .nav-link:hover {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .login-link {
+  color: #D1D5DB;
+  background: #161616;
+  border: 1px solid #282828;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+}
+
+html[data-theme="night"] .login-link:hover {
+  background: #202020;
+  color: #FFFFFF;
+  border-color: #383838;
+}
+
+html[data-theme="night"] .btn-pill-black {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .btn-pill-black:hover {
+  background: #1D4ED8;
+}
+
+/* Ambient wash */
+html[data-theme="night"] .ambient-navy-curve {
+  background: radial-gradient(ellipse at 15% 25%, rgba(29, 78, 216, 0.12) 0%, rgba(10, 25, 49, 0.05) 50%, transparent 75%);
+}
+
+/* Hero Section */
+html[data-theme="night"] .hero-headline {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .hero-headline em {
+  color: #60A5FA;
+}
+
+html[data-theme="night"] .hero-subhead {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .hero-badge-tag {
+  background: #141414;
+  border-color: #262626;
+  color: #D1D5DB;
+}
+
+html[data-theme="night"] .hero-signup-box {
+  background: #121212;
+  border-color: #262626;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="night"] .hero-input {
+  background: #181818;
+  border-color: #333333;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .hero-input:focus {
+  border-color: #3B82F6;
+  background: #1F1F1F;
+}
+
+html[data-theme="night"] .btn-hero-submit {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .btn-hero-submit:hover {
+  background: #1D4ED8;
+}
+
+html[data-theme="night"] .sso-divider-row {
+  color: #6B7280;
+}
+
+html[data-theme="night"] .sso-divider-row::before,
+html[data-theme="night"] .sso-divider-row::after {
+  background: #222222;
+}
+
+html[data-theme="night"] .sso-auth-btn {
+  background: #181818;
+  border-color: #2E2E2E;
+  color: #E5E7EB;
+}
+
+html[data-theme="night"] .sso-auth-btn:hover {
+  background: #222222;
+  border-color: #3E3E3E;
+  color: #FFFFFF;
+}
+
+/* Case Study / Impact Card */
+html[data-theme="night"] .impact-quote-card {
+  background: #111111;
+  border-color: #262626;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="night"] .impact-metrics-col {
+  border-right-color: #262626;
+}
+
+html[data-theme="night"] .impact-client-logo {
+  color: #93C5FD;
+}
+
+html[data-theme="night"] .impact-stat-number {
+  color: #60A5FA;
+}
+
+html[data-theme="night"] .impact-stat-label {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .impact-quote-text {
+  color: #E5E7EB;
+}
+
+html[data-theme="night"] .impact-quote-text em {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .quotee-name {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .quotee-role {
+  color: #9CA3AF;
+}
+
+/* Console & Scanner */
+html[data-theme="night"] .console-card {
+  background: #111111;
+  border-color: #262626;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+}
+
+html[data-theme="night"] .ai-scanner-panel {
+  background: #0D0D0D;
+  border-bottom-color: #222222;
+}
+
+html[data-theme="night"] .ai-prompt-bar-container {
+  background: #141414;
+  border-color: #262626;
+}
+
+html[data-theme="night"] .ai-engine-badge {
+  background: #1E293B;
+  border-color: #334155;
+  color: #93C5FD;
+}
+
+html[data-theme="night"] .ai-engine-subtext {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .ai-prompt-input-row {
+  background: #181818;
+  border-color: #2E2E2E;
+}
+
+html[data-theme="night"] .ai-custom-prompt-input {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .ai-prompt-search-icon {
+  color: #6B7280;
+}
+
+html[data-theme="night"] .ai-prompt-submit-btn {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .ai-prompt-submit-btn:hover {
+  background: #1D4ED8;
+}
+
+html[data-theme="night"] .quick-prompt-label {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .quick-prompt-chip {
+  background: #1A1A1A;
+  border-color: #2A2A2A;
+  color: #D1D5DB;
+}
+
+html[data-theme="night"] .quick-prompt-chip:hover {
+  background: #252525;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .quick-prompt-chip.active {
+  background: #1E3A8A;
+  border-color: #3B82F6;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .scanner-label {
+  color: #93C5FD;
+}
+
+html[data-theme="night"] .scanner-input {
+  background: #181818;
+  border-color: #2E2E2E;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .scanner-input:focus {
+  border-color: #3B82F6;
+  background: #1F1F1F;
+}
+
+html[data-theme="night"] .scanner-primary-btn {
+  background: #2563EB;
+}
+
+html[data-theme="night"] .scanner-primary-btn:hover {
+  background: #1D4ED8;
+}
+
+html[data-theme="night"] .demo-preview-notice-bar {
+  background: linear-gradient(90deg, #10192D 0%, #131E35 100%);
+  border-color: #1E3A8A;
+  color: #E2E8F0;
+}
+
+html[data-theme="night"] .console-topbar {
+  background: #0D0D0D;
+  border-bottom-color: #222222;
+}
+
+html[data-theme="night"] .console-tab {
+  background: #161616;
+  border-color: #262626;
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .console-tab:hover {
+  background: #202020;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .console-tab.active {
+  background: #1E293B;
+  border-color: #3B82F6;
+  color: #93C5FD;
+}
+
+html[data-theme="night"] .btn-console-action {
+  background: #161616;
+  border-color: #262626;
+  color: #D1D5DB;
+}
+
+html[data-theme="night"] .btn-console-action:hover {
+  background: #202020;
+  color: #FFFFFF;
+}
+
+/* Feed Table */
+html[data-theme="night"] .light-feed-table thead th {
+  background: #141414;
+  border-bottom-color: #262626;
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .light-feed-row {
+  border-bottom-color: #1E1E1E;
+  background: #111111;
+}
+
+html[data-theme="night"] .light-feed-row:hover {
+  background: #171717;
+}
+
+html[data-theme="night"] .light-feed-row.active {
+  background: #162032;
+}
+
+html[data-theme="night"] .console-table-pane {
+  border-right-color: #262626;
+}
+
+/* Drawer */
+html[data-theme="night"] .console-drawer-pane {
+  background: #0D0D0D;
+}
+
+html[data-theme="night"] .drawer-card {
+  background: #141414;
+  border-color: #262626;
+}
+
+html[data-theme="night"] .drawer-card-title {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] #inspector-lead-name {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .contact-pill {
+  background: #1A1A1A;
+  border-color: #2E2E2E;
+  color: #E5E7EB;
+}
+
+html[data-theme="night"] .drawer-diag-row {
+  border-bottom-color: #1F1F1F;
+}
+
+html[data-theme="night"] #inspector-outreach-script {
+  background: #0A0A0A;
+  border-color: #262626;
+  color: #E5E7EB;
+}
+
+html[data-theme="night"] .outreach-lock-card {
+  background: rgba(18, 18, 18, 0.95);
+  border-color: #2E2E2E;
+  color: #E5E7EB;
+}
+
+html[data-theme="night"] .outreach-lock-card h5 {
+  color: #FBBF24;
+}
+
+html[data-theme="night"] .outreach-lock-card p {
+  color: #E2E8F0;
+}
+
+html[data-theme="night"] .demo-lock-pill {
+  background: #2E2008;
+  color: #FCD34D;
+  border-color: #78350F;
+}
+
+html[data-theme="night"] .pitch-format-tab {
+  background: #1A1A1A;
+  border-color: #2A2A2A;
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .pitch-format-tab.active {
+  background: #1E3A8A;
+  color: #FFFFFF;
+  border-color: #3B82F6;
+}
+
+/* Methodology & Pricing & FAQ */
+html[data-theme="night"] .section-title {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .section-subhead {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .methodology-card {
+  background: #111111;
+  border-color: #262626;
+}
+
+html[data-theme="night"] .methodology-number {
+  color: #60A5FA;
+}
+
+html[data-theme="night"] .methodology-title {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .methodology-desc {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .pricing-card {
+  background: #111111;
+  border-color: #262626;
+}
+
+html[data-theme="night"] .pricing-card.featured {
+  border-color: #3B82F6;
+  background: #111624;
+}
+
+html[data-theme="night"] .pricing-plan-name {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .pricing-amount {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .pricing-period {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .pricing-feature-item {
+  color: #D1D5DB;
+}
+
+html[data-theme="night"] .faq-item {
+  background: #111111;
+  border-color: #262626;
+}
+
+html[data-theme="night"] .faq-question-btn {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .faq-answer {
+  color: #9CA3AF;
+}
+
+/* Footer */
+html[data-theme="night"] .site-footer {
+  background: #080808;
+  border-top-color: #1F1F1F;
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .footer-col-title {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .footer-link {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .footer-link:hover {
+  color: #FFFFFF;
+}
+
+/* Auth Dialog */
+html[data-theme="night"] .auth-modal-dialog {
+  background: #121212;
+  border-color: #2E2E2E;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .auth-modal-title {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .auth-modal-sub {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .auth-input {
+  background: #181818;
+  border-color: #2E2E2E;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .auth-otp-input {
+  background: #181818;
+  border-color: #2E2E2E;
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .auth-label {
+  color: #D1D5DB;
+}
+
+html[data-theme="night"] .auth-field-row input {
+  background: #181818;
+  border-color: #2E2E2E;
+  color: #FFFFFF;
+}
+
 

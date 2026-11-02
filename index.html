@@ -14,6 +14,20 @@
   <!-- Google Identity Services (GIS) Official SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+  <!-- Theme Mode Bootstrap Script -->
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem('xyz_theme');
+        if (savedTheme === 'night') {
+          document.documentElement.setAttribute('data-theme', 'night');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'day');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -48,8 +62,32 @@
           </ul>
         </nav>
 
-        <!-- Right Header Actions (Auth States) -->
+        <!-- Right Header Actions (Auth States & Day/Night Mode Switcher) -->
         <div class="header-ctas">
+          <!-- Day / Night Mode Switcher Pill -->
+          <div class="theme-switch-pill" id="theme-switch-pill" role="radiogroup" aria-label="Day or Night Mode">
+            <button type="button" class="theme-switch-btn active" id="theme-btn-day" data-mode="day" aria-checked="true" title="Switch to Day Mode (Light)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <span>Day</span>
+            </button>
+            <button type="button" class="theme-switch-btn" id="theme-btn-night" data-mode="night" aria-checked="false" title="Switch to Night Mode (Dark)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <span>Night</span>
+            </button>
+          </div>
+
           <!-- Unauthenticated State -->
           <div id="auth-unauthenticated" style="display: flex; align-items: center; gap: 12px;">
             <button class="login-link open-auth-modal" id="header-signin-btn" style="display: flex; align-items: center; gap: 6px;">

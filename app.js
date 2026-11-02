@@ -239,6 +239,7 @@ function showToast(message, type = 'info') {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeMode();
   initAiPromptBar();
   initScanner();
   initPresetChips();
@@ -259,6 +260,59 @@ document.addEventListener('DOMContentLoaded', () => {
     syncUserData();
   }
 });
+
+/* ==========================================================================
+   DAY / NIGHT MODE SWITCHER CONTROLLER
+   ========================================================================== */
+
+function initThemeMode() {
+  const dayBtn = document.getElementById('theme-btn-day');
+  const nightBtn = document.getElementById('theme-btn-night');
+  if (!dayBtn || !nightBtn) return;
+
+  const applyTheme = (mode) => {
+    if (mode === 'night') {
+      document.documentElement.setAttribute('data-theme', 'night');
+      document.body.classList.add('night-theme');
+      dayBtn.classList.remove('active');
+      dayBtn.setAttribute('aria-checked', 'false');
+      nightBtn.classList.add('active');
+      nightBtn.setAttribute('aria-checked', 'true');
+      try { localStorage.setItem('xyz_theme', 'night'); } catch (e) {}
+    } else {
+      document.documentElement.setAttribute('data-theme', 'day');
+      document.body.classList.remove('night-theme');
+      nightBtn.classList.remove('active');
+      nightBtn.setAttribute('aria-checked', 'false');
+      dayBtn.classList.add('active');
+      dayBtn.setAttribute('aria-checked', 'true');
+      try { localStorage.setItem('xyz_theme', 'day'); } catch (e) {}
+    }
+  };
+
+  // Determine current active mode
+  let currentMode = 'day';
+  try {
+    const saved = localStorage.getItem('xyz_theme');
+    if (saved === 'night') currentMode = 'night';
+    else if (saved === 'day') currentMode = 'day';
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      currentMode = 'night';
+    }
+  } catch (e) {}
+
+  applyTheme(currentMode);
+
+  dayBtn.addEventListener('click', () => {
+    applyTheme('day');
+    showToast('☀️ Day mode enabled', 'info');
+  });
+
+  nightBtn.addEventListener('click', () => {
+    applyTheme('night');
+    showToast('🌙 Night mode enabled', 'info');
+  });
+}
 
 /* ==========================================================================
    AI PROMPT BAR & PLAYWRIGHT PIPELINE CONTROLLER
