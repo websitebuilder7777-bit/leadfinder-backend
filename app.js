@@ -1005,6 +1005,11 @@ function initAuthModal() {
   openButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (currentUser) {
+        showToast('You are already signed in to your workspace.', 'info');
+        window.location.href = 'chat.html';
+        return;
+      }
       if (typeof switchAuthView === 'function') switchAuthView('auth-view-signin');
       if (typeof modal.showModal === 'function') {
         modal.showModal();
@@ -1042,8 +1047,12 @@ function initAuthModal() {
 function updateAuthUi() {
   const unauthDiv = document.getElementById('auth-unauthenticated');
   const authDiv = document.getElementById('auth-authenticated');
+  const heroUnauth = document.getElementById('hero-unauthenticated');
+  const heroAuth = document.getElementById('hero-authenticated');
   const userImg = document.getElementById('header-user-img');
   const userName = document.getElementById('header-user-name');
+  const heroUserAvatar = document.getElementById('hero-auth-avatar');
+  const heroUserName = document.getElementById('hero-auth-user-name');
   const savedCount = document.getElementById('header-saved-count');
   const tabSavedCount = document.getElementById('tab-saved-count');
 
@@ -1053,17 +1062,25 @@ function updateAuthUi() {
   updateSavedCountBadge();
 
   if (currentUser) {
+    document.documentElement.classList.add('user-logged-in');
     if (unauthDiv) unauthDiv.style.display = 'none';
     if (authDiv) authDiv.style.display = 'flex';
-    if (userImg) {
-      userImg.src = currentUser.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name || 'User')}`;
-    }
-    if (userName) {
-      userName.textContent = currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
-    }
+    if (heroUnauth) heroUnauth.style.display = 'none';
+    if (heroAuth) heroAuth.style.display = 'block';
+
+    const displayName = currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+    const avatarUrl = currentUser.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+
+    if (userImg) userImg.src = avatarUrl;
+    if (userName) userName.textContent = displayName;
+    if (heroUserAvatar) heroUserAvatar.src = avatarUrl;
+    if (heroUserName) heroUserName.textContent = displayName;
   } else {
+    document.documentElement.classList.remove('user-logged-in');
     if (unauthDiv) unauthDiv.style.display = 'flex';
     if (authDiv) authDiv.style.display = 'none';
+    if (heroUnauth) heroUnauth.style.display = 'block';
+    if (heroAuth) heroAuth.style.display = 'none';
   }
 }
 
@@ -1126,6 +1143,8 @@ async function syncUserData() {
 function signOut() {
   currentUser = null;
   localStorage.removeItem('xyz_user_session');
+  localStorage.removeItem('xyz_session_token');
+  document.documentElement.classList.remove('user-logged-in');
   updateAuthUi();
   updateSaveLeadButtonState();
   if (activeFilter === 'saved') {
@@ -1790,10 +1809,17 @@ function initEmailOtpAuth() {
     });
   }
 
-  // Header Sign Out button
+  // Header & Hero Sign Out buttons
   const signOutBtn = document.getElementById('header-signout-btn');
   if (signOutBtn) {
     signOutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      signOut();
+    });
+  }
+  const heroLogoutBtn = document.getElementById('hero-logout-btn');
+  if (heroLogoutBtn) {
+    heroLogoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
       signOut();
     });

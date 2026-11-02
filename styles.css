@@ -358,8 +358,8 @@ body {
 }
 
 .sso-buttons-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
@@ -385,6 +385,183 @@ body {
   background: var(--color-surface-soft);
   border-color: var(--border-medium);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Zero-Flicker Logged-in Auth State Controls */
+html.user-logged-in #auth-unauthenticated,
+html.user-logged-in #hero-unauthenticated {
+  display: none !important;
+}
+html.user-logged-in #auth-authenticated {
+  display: flex !important;
+}
+html.user-logged-in #hero-authenticated {
+  display: block !important;
+}
+html:not(.user-logged-in) #hero-authenticated {
+  display: none !important;
+}
+html:not(.user-logged-in) #auth-authenticated {
+  display: none !important;
+}
+
+/* ==========================================================================
+   AUTHENTICATED HERO CARD (NO SIGN IN / CREATE ACCOUNT FOR LOGGED-IN USERS)
+   ========================================================================== */
+
+.hero-auth-welcome-card {
+  background: var(--color-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 12px);
+  padding: 24px 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  text-align: left;
+  animation: fadeInAuth 0.22s ease-out;
+}
+
+@keyframes fadeInAuth {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-auth-user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 14px;
+}
+
+.hero-auth-user-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero-user-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--navy-700);
+  background: var(--color-surface-soft);
+}
+
+.hero-auth-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-auth-status-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-live-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.22);
+}
+
+.hero-auth-status-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #10B981;
+}
+
+.hero-auth-greeting {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--text-black);
+}
+
+.hero-signout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hero-signout-btn:hover {
+  background: var(--color-surface-soft);
+  color: var(--text-black);
+  border-color: var(--border-medium);
+}
+
+.hero-auth-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 18px 0;
+}
+
+.hero-auth-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-hero-launch-agent {
+  flex: 1.2;
+  min-width: 200px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--navy-900);
+  color: #ffffff !important;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: var(--radius-sm, 6px);
+  text-decoration: none;
+  transition: all 0.16s ease;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.25);
+}
+
+.btn-hero-launch-agent:hover {
+  background: var(--navy-700);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(29, 78, 216, 0.35);
+}
+
+.btn-hero-view-console {
+  flex: 1;
+  min-width: 170px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-surface-soft);
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-medium);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  text-decoration: none;
+  transition: all 0.16s ease;
+}
+
+.btn-hero-view-console:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--navy-700);
 }
 
 /* ==========================================================================
@@ -3210,5 +3387,56 @@ html[data-theme="night"] .auth-field-row input {
   border-color: #2E2E2E;
   color: #FFFFFF;
 }
+
+/* Night Mode overrides for Authenticated Hero */
+html[data-theme="night"] .hero-auth-welcome-card {
+  background: #141414;
+  border-color: #262626;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+}
+
+html[data-theme="night"] .hero-auth-user-bar {
+  border-bottom-color: #262626;
+}
+
+html[data-theme="night"] .hero-auth-greeting {
+  color: #FFFFFF;
+}
+
+html[data-theme="night"] .hero-auth-desc {
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .hero-signout-btn {
+  border-color: #333333;
+  color: #9CA3AF;
+}
+
+html[data-theme="night"] .hero-signout-btn:hover {
+  background: #202020;
+  color: #FFFFFF;
+  border-color: #444444;
+}
+
+html[data-theme="night"] .btn-hero-launch-agent {
+  background: #2563EB;
+}
+
+html[data-theme="night"] .btn-hero-launch-agent:hover {
+  background: #1D4ED8;
+}
+
+html[data-theme="night"] .btn-hero-view-console {
+  background: #1E1E1E;
+  border-color: #333333;
+  color: #E5E7EB !important;
+}
+
+html[data-theme="night"] .btn-hero-view-console:hover {
+  background: #262626;
+  border-color: #3B82F6;
+  color: #FFFFFF !important;
+}
+
 
 
