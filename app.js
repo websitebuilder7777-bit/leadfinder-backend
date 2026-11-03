@@ -250,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaqAccordion();
   initAuthModal();
   initEmailOtpAuth();
+  initChatbotGating();
 
   updateAuthUi();
   renderTable();
@@ -318,6 +319,22 @@ function initThemeMode() {
    AI PROMPT BAR & PLAYWRIGHT PIPELINE CONTROLLER
    ========================================================================== */
 
+function openChatbotOrAuth(targetUrl = 'chat.html') {
+  if (currentUser) {
+    window.location.href = targetUrl;
+  } else {
+    sessionStorage.setItem('redirect_after_auth', targetUrl);
+    if (typeof switchAuthView === 'function') switchAuthView('auth-view-signup');
+    const modal = document.getElementById('auth-dialog') || document.getElementById('auth-modal');
+    if (modal && typeof modal.showModal === 'function') {
+      modal.showModal();
+    } else if (modal) {
+      modal.setAttribute('open', '');
+    }
+    showToast('Create your free account to unlock 100 free leads and access the AI Chatbot!', 'info');
+  }
+}
+
 function initAiPromptBar() {
   const promptBtn = document.getElementById('btn-run-ai-pipeline');
   const promptInput = document.getElementById('ai-custom-prompt-input');
@@ -326,7 +343,7 @@ function initAiPromptBar() {
   if (promptBtn && promptInput) {
     const triggerPromptPipeline = () => {
       const promptVal = promptInput.value.trim() || 'clinic near me without website in India';
-      window.location.href = `chat.html?q=${encodeURIComponent(promptVal)}`;
+      openChatbotOrAuth(`chat.html?q=${encodeURIComponent(promptVal)}`);
     };
 
     promptBtn.addEventListener('click', triggerPromptPipeline);
@@ -349,7 +366,7 @@ function initAiPromptBar() {
       if (promptInput) {
         promptInput.value = text;
       }
-      window.location.href = `chat.html?q=${encodeURIComponent(text)}`;
+      openChatbotOrAuth(`chat.html?q=${encodeURIComponent(text)}`);
     });
   });
 }
@@ -367,7 +384,7 @@ function initScanner() {
     const city = cityInput.value.trim() || 'Delhi, India';
     const filter = vulnSelect.value || 'no_website';
     const query = `${niche} in ${city} (${filter.replace(/_/g, ' ')})`;
-    window.location.href = `chat.html?q=${encodeURIComponent(query)}`;
+    openChatbotOrAuth(`chat.html?q=${encodeURIComponent(query)}`);
   };
 
   runBtn.addEventListener('click', triggerScan);
@@ -954,7 +971,7 @@ function updateSavedCountBadge() {
 
 function exportLeadsToCsv() {
   if (confirm('🔒 Live Demo Notice: Contact names, phone numbers, and addresses are masked in this interactive demo preview.\n\nLaunch the live AI Chatbot to run unmasked searches and export complete verified lead lists?')) {
-    window.location.href = 'chat.html';
+    openChatbotOrAuth('chat.html');
     return;
   }
 }
@@ -1040,6 +1057,37 @@ function initAuthModal() {
   });
 }
 
+function initChatbotGating() {
+  document.querySelectorAll('a[href^="chat.html"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      if (!currentUser) {
+        e.preventDefault();
+        openChatbotOrAuth(a.getAttribute('href') || 'chat.html');
+      }
+    });
+  });
+
+  // Check URL query parameters for ?auth=signup or ?auth=signin
+  const urlParams = new URLSearchParams(window.location.search);
+  const authMode = urlParams.get('auth');
+  if (authMode && !currentUser) {
+    setTimeout(() => {
+      if (authMode === 'signup') {
+        switchAuthView('auth-view-signup');
+        showToast('Create your free account to unlock 100 free leads and access the AI Chatbot!', 'info');
+      } else {
+        switchAuthView('auth-view-signin');
+      }
+      const modal = document.getElementById('auth-dialog') || document.getElementById('auth-modal');
+      if (modal && typeof modal.showModal === 'function') {
+        modal.showModal();
+      } else if (modal) {
+        modal.setAttribute('open', '');
+      }
+    }, 250);
+  }
+}
+
 /* ==========================================================================
    GOOGLE IDENTITY SERVICES & USER PERSISTENCE SYSTEM
    ========================================================================== */
@@ -1112,6 +1160,14 @@ async function signInUser(authPayload) {
     // Close modal
     const dialog = document.getElementById('auth-dialog') || document.getElementById('auth-modal');
     if (dialog && typeof dialog.close === 'function') dialog.close();
+
+    const redirectTarget = sessionStorage.getItem('redirect_after_auth');
+    if (redirectTarget) {
+      sessionStorage.removeItem('redirect_after_auth');
+      showToast('Launching AI Lead Chatbot...', 'success');
+      setTimeout(() => { window.location.href = redirectTarget; }, 400);
+      return;
+    }
 
     showToast(`✓ Signed in as ${currentUser.name}! Your saved leads are synced.`, 'info');
   } catch (err) {
@@ -1400,6 +1456,13 @@ async function handleSignInSubmit(e) {
 
     const modal = document.getElementById('auth-dialog');
     if (modal && typeof modal.close === 'function') modal.close();
+
+    const redirectTarget = sessionStorage.getItem('redirect_after_auth');
+    if (redirectTarget) {
+      sessionStorage.removeItem('redirect_after_auth');
+      showToast('Launching AI Lead Chatbot...', 'success');
+      setTimeout(() => { window.location.href = redirectTarget; }, 400);
+    }
   } catch (err) {
     console.error('[Sign In Error]', err);
     showToast(err.message, 'warning');
@@ -1539,6 +1602,13 @@ async function handleVerifyOtpSubmit(e) {
 
     const modal = document.getElementById('auth-dialog');
     if (modal && typeof modal.close === 'function') modal.close();
+
+    const redirectTarget = sessionStorage.getItem('redirect_after_auth');
+    if (redirectTarget) {
+      sessionStorage.removeItem('redirect_after_auth');
+      showToast('Launching AI Lead Chatbot...', 'success');
+      setTimeout(() => { window.location.href = redirectTarget; }, 400);
+    }
   } catch (err) {
     console.error('[Verify OTP Error]', err);
     showToast(err.message, 'warning');
@@ -1670,6 +1740,13 @@ async function handleResetPasswordSubmit(e) {
 
     const modal = document.getElementById('auth-dialog');
     if (modal && typeof modal.close === 'function') modal.close();
+
+    const redirectTarget = sessionStorage.getItem('redirect_after_auth');
+    if (redirectTarget) {
+      sessionStorage.removeItem('redirect_after_auth');
+      showToast('Launching AI Lead Chatbot...', 'success');
+      setTimeout(() => { window.location.href = redirectTarget; }, 400);
+    }
   } catch (err) {
     console.error('[Reset Password Error]', err);
     showToast(err.message, 'warning');

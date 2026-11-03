@@ -99,6 +99,21 @@
   };
 
   // ------------------------------------------------------------------------
+  // AUTHENTICATION GUARD & USER SESSION
+  // ------------------------------------------------------------------------
+  let currentUser = null;
+  try {
+    const raw = localStorage.getItem('xyz_user_session');
+    if (raw) currentUser = JSON.parse(raw);
+  } catch(e){}
+
+  if (!currentUser || !currentUser.id) {
+    sessionStorage.setItem('redirect_after_auth', window.location.href);
+    window.location.replace('index.html?auth=signup');
+    return;
+  }
+
+  // ------------------------------------------------------------------------
   // STATE MANAGEMENT
   // ------------------------------------------------------------------------
   let isExecuting = false;
@@ -107,6 +122,17 @@
   let activeCity = "Bangalore";
   let activeVuln = "no_website"; // 'no_website' | 'unclaimed' | 'insecure_ssl' | 'dead_link'
   let savedLeadsCount = 0;
+
+  // Lifetime Quota Management (100 Free Lifetime Leads)
+  let userQuota = {
+    freeQuota: currentUser.freeQuota || 100,
+    leadsGenerated: currentUser.leadsGenerated || 0,
+    leadsRemaining: typeof currentUser.leadsRemaining === 'number' ? currentUser.leadsRemaining : 100
+  };
+
+  // Persistent Chat History
+  let chatSessions = [];
+  let activeSessionId = null;
 
   // DOM Elements
   const chatScrollArea = document.getElementById('chat-messages-scroll-area');
@@ -118,6 +144,18 @@
   const sidebarNewChatBtn = document.getElementById('btn-sidebar-new-chat');
   const toggleSidebarBtn = document.getElementById('btn-toggle-sidebar');
   const darkSidebar = document.getElementById('dark-sidebar');
+
+  // Quota & Profile UI Elements
+  const quotaRemainingEl = document.getElementById('quota-remaining-count');
+  const quotaBarFill = document.getElementById('quota-bar-fill');
+  const quotaBadgePill = document.getElementById('quota-badge-pill');
+  const userAvatar = document.getElementById('chat-user-avatar');
+  const userName = document.getElementById('chat-user-name');
+  const btnChatLogout = document.getElementById('btn-chat-logout');
+
+  // History UI Elements
+  const chatHistoryCountEl = document.getElementById('chat-history-count');
+  const chatHistoryListEl = document.getElementById('chat-history-list');
 
   // Location UI Elements
   const navTargetLabel = document.getElementById('nav-target-label');
@@ -139,6 +177,7 @@
   // INITIALIZATION
   // ------------------------------------------------------------------------
   document.addEventListener('DOMContentLoaded', () => {
+    initUserAndQuota();
     initInputEvents();
     initVulnerabilityToggles();
     initCascadingPlacesPicker();
@@ -148,6 +187,286 @@
     updateLocationDisplays();
     checkUrlQueryParams();
   });
+
+  // ------------------------------------------------------------------------
+  // USER PROFILE, LIVE QUOTA & CHAT HISTORY SYSTEM
+  // ------------------------------------------------------------------------
+  function initUserAndQuota() {
+    if (userAvatar) {
+      const displayName = currentUser.name || currentUser.email || 'User';
+      userAvatar.src = currentUser.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+    }
+    if (userName) {
+      userName.textContent = currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+    }
+
+    if (btnChatLogout) {
+      btnChatLogout.addEventListener('click', () => {
+        localStorage.removeItem('xyz_user_session');
+        localStorage.removeItem('xyz_session_token');
+        sessionStorage.removeItem('redirect_after_auth');
+        window.location.href = 'index.html';
+      });
+    }
+
+    updateQuotaDisplay();
+    fetchUserQuota();
+    loadChatSessions();
+  }
+
+  function updateQuotaDisplay() {
+    if (quotaRemainingEl) {
+      quotaRemainingEl.textContent = userQuota.leadsRemaining;
+    }
+    if (quotaBarFill) {
+      const pct = Math.max(0, Math.min(100, (userQuota.leadsRemaining / (userQuota.freeQuota || 100)) * 100));
+      quotaBarFill.style.width = `${pct}%`;
+    }
+    if (quotaBadgePill) {
+      quotaBadgePill.classList.remove('warning', 'danger');
+      if (userQuota.leadsRemaining <= 0) {
+        quotaBadgePill.classList.add('danger');
+      } else if (userQuota.leadsRemaining <= 20) {
+        quotaBadgePill.classList.add('warning');
+      }
+    }
+  }
+
+  async function fetchUserQuota() {
+    if (!currentUser || !currentUser.id) return;
+    try {
+      const res = await fetch(`/api/user/quota?userId=${encodeURIComponent(currentUser.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          userQuota.freeQuota = data.freeQuota;
+          userQuota.leadsGenerated = data.leadsGenerated;
+          userQuota.leadsRemaining = data.leadsRemaining;
+          currentUser.freeQuota = data.freeQuota;
+          currentUser.leadsGenerated = data.leadsGenerated;
+          currentUser.leadsRemaining = data.leadsRemaining;
+          localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+          updateQuotaDisplay();
+        }
+      }
+    } catch (err) {
+      console.warn('[Quota Fetch Error]', err);
+    }
+  }
+
+  async function loadChatSessions() {
+    if (!currentUser || !currentUser.id) return;
+
+    // Load from local storage cache first for instant display
+    try {
+      const cached = localStorage.getItem(`xyz_chat_sessions_${currentUser.id}`);
+      if (cached) {
+        chatSessions = JSON.parse(cached);
+        renderChatHistorySidebar();
+      }
+    } catch(e){}
+
+    // Sync from backend
+    try {
+      const res = await fetch(`/api/user/chats?userId=${encodeURIComponent(currentUser.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.sessions)) {
+          // Merge with detailed local turns if present
+          data.sessions.forEach(remote => {
+            const local = chatSessions.find(l => l.id === remote.id);
+            if (local && local.turns && (!remote.turns || remote.turns.length === 0)) {
+              remote.turns = local.turns;
+            }
+          });
+          chatSessions = data.sessions;
+          localStorage.setItem(`xyz_chat_sessions_${currentUser.id}`, JSON.stringify(chatSessions));
+          renderChatHistorySidebar();
+        }
+      }
+    } catch (err) {
+      console.warn('[Chat History Sync Error]', err);
+    }
+  }
+
+  function renderChatHistorySidebar() {
+    if (!chatHistoryListEl) return;
+    if (chatHistoryCountEl) chatHistoryCountEl.textContent = chatSessions.length;
+
+    if (chatSessions.length === 0) {
+      chatHistoryListEl.innerHTML = `<div class="chat-history-empty" id="chat-history-empty">No saved chats yet</div>`;
+      return;
+    }
+
+    chatHistoryListEl.innerHTML = '';
+    chatSessions.forEach(session => {
+      const item = document.createElement('div');
+      item.className = `chat-history-item ${activeSessionId === session.id ? 'active' : ''}`;
+      item.dataset.sessionId = session.id;
+
+      const leadsBadge = session.leadsCount ? `<span class="chat-history-leads-badge">${session.leadsCount} leads</span>` : '';
+      const timeStr = formatTimeAgo(session.updatedAt || session.createdAt);
+
+      item.innerHTML = `
+        <div class="chat-history-item-content">
+          <div class="chat-history-item-title" title="${escapeHtml(session.title)}">${escapeHtml(session.title)}</div>
+          <div class="chat-history-item-meta">
+            <span>${timeStr}</span>
+            ${leadsBadge}
+          </div>
+        </div>
+        <button type="button" class="chat-history-delete-btn" data-del-id="${session.id}" title="Delete chat">✕</button>
+      `;
+
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.chat-history-delete-btn')) return;
+        loadChatSessionIntoView(session.id);
+        closeMobileSidebar();
+      });
+
+      const delBtn = item.querySelector('.chat-history-delete-btn');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteChatSession(session.id);
+        });
+      }
+
+      chatHistoryListEl.appendChild(item);
+    });
+  }
+
+  function formatTimeAgo(isoDate) {
+    if (!isoDate) return 'Recently';
+    const diff = Math.floor((Date.now() - new Date(isoDate).getTime()) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return new Date(isoDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  async function loadChatSessionIntoView(sessionId) {
+    activeSessionId = sessionId;
+    renderChatHistorySidebar();
+
+    let session = chatSessions.find(s => s.id === sessionId);
+    if (!session || !session.turns || session.turns.length === 0) {
+      // Fetch full details from backend
+      try {
+        const res = await fetch(`/api/user/chats/detail?userId=${encodeURIComponent(currentUser.id)}&sessionId=${encodeURIComponent(sessionId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.session) {
+            session = data.session;
+            const idx = chatSessions.findIndex(s => s.id === sessionId);
+            if (idx >= 0) chatSessions[idx] = session;
+            localStorage.setItem(`xyz_chat_sessions_${currentUser.id}`, JSON.stringify(chatSessions));
+          }
+        }
+      } catch (err) {
+        console.warn('[Session Detail Fetch Error]', err);
+      }
+    }
+
+    if (!session || !Array.isArray(session.turns)) return;
+
+    // Clear current chat turns
+    const turns = chatCenterCol.querySelectorAll('.chat-turn-row');
+    turns.forEach(t => t.remove());
+
+    if (heroEmptyState) heroEmptyState.style.display = 'none';
+
+    // Replay each turn
+    session.turns.forEach(turn => {
+      // 1. User message
+      appendUserTurn(turn.userPrompt);
+
+      // 2. Assistant turn with leads
+      const assistantTurn = createAssistantTurn();
+      chatCenterCol.appendChild(assistantTurn);
+      const contentArea = assistantTurn.querySelector('.assistant-turn-content');
+
+      const thinkingBox = createSanitizedThinkingBox();
+      completeThinkingBox(thinkingBox, turn.leads?.length || 0);
+      contentArea.appendChild(thinkingBox);
+
+      renderPipelineResults(contentArea, { leads: turn.leads, plan: turn.plan }, turn.userPrompt);
+    });
+
+    scrollToBottom();
+    showToast(`Loaded: "${session.title}"`);
+  }
+
+  async function deleteChatSession(sessionId) {
+    if (!confirm('Delete this saved conversation?')) return;
+
+    chatSessions = chatSessions.filter(s => s.id !== sessionId);
+    localStorage.setItem(`xyz_chat_sessions_${currentUser.id}`, JSON.stringify(chatSessions));
+    renderChatHistorySidebar();
+
+    try {
+      await fetch(`/api/user/chats?userId=${encodeURIComponent(currentUser.id)}&sessionId=${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE'
+      });
+    } catch(e){}
+
+    if (activeSessionId === sessionId) {
+      resetChatView();
+      activeSessionId = null;
+    }
+    showToast('Conversation deleted');
+  }
+
+  function saveCurrentChatTurn(promptText, leadsData, planData) {
+    if (!currentUser || !currentUser.id) return;
+
+    const leadsCount = leadsData?.length || 0;
+    const newTurn = {
+      userPrompt: promptText,
+      leads: leadsData,
+      plan: planData,
+      timestamp: new Date().toISOString()
+    };
+
+    if (!activeSessionId) {
+      activeSessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const newSession = {
+        id: activeSessionId,
+        title: promptText.length > 42 ? promptText.slice(0, 40) + '...' : promptText,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        leadsCount: leadsCount,
+        turns: [newTurn]
+      };
+      chatSessions.unshift(newSession);
+    } else {
+      const existing = chatSessions.find(s => s.id === activeSessionId);
+      if (existing) {
+        existing.turns = existing.turns || [];
+        existing.turns.push(newTurn);
+        existing.updatedAt = new Date().toISOString();
+        existing.leadsCount = (existing.leadsCount || 0) + leadsCount;
+        // Move to top
+        chatSessions = [existing, ...chatSessions.filter(s => s.id !== activeSessionId)];
+      }
+    }
+
+    localStorage.setItem(`xyz_chat_sessions_${currentUser.id}`, JSON.stringify(chatSessions));
+    renderChatHistorySidebar();
+
+    // Sync to backend
+    const currentSession = chatSessions.find(s => s.id === activeSessionId);
+    if (currentSession) {
+      fetch('/api/user/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          session: currentSession
+        })
+      }).catch(err => console.warn('[Save Chat Backend Error]', err));
+    }
+  }
 
   // ------------------------------------------------------------------------
   // INPUT & BUTTON EVENTS
@@ -196,6 +515,9 @@
   }
 
   function resetChatView() {
+    activeSessionId = null;
+    renderChatHistorySidebar();
+
     // Remove all turn rows except hero
     const turns = chatCenterCol.querySelectorAll('.chat-turn-row');
     turns.forEach(t => t.remove());
@@ -495,6 +817,41 @@
   // ------------------------------------------------------------------------
   async function executePipelineMission(promptText) {
     if (isExecuting) return;
+
+    // Check if user has depleted their 100 free lifetime leads
+    if (userQuota.leadsRemaining <= 0) {
+      if (heroEmptyState) heroEmptyState.style.display = 'none';
+      appendUserTurn(promptText);
+
+      const assistantTurn = createAssistantTurn();
+      chatCenterCol.appendChild(assistantTurn);
+      const contentArea = assistantTurn.querySelector('.assistant-turn-content');
+
+      const quotaExceededBox = document.createElement('div');
+      quotaExceededBox.className = 'quota-exceeded-card';
+      quotaExceededBox.innerHTML = `
+        <div class="quota-exceeded-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+          </svg>
+          <span>100 Free Lifetime Leads Limit Reached</span>
+        </div>
+        <div class="quota-exceeded-desc">
+          You have successfully generated and verified all <strong>100 free leads</strong> included in your lifetime starter tier. Upgrade your account to unlock unlimited live search missions, instant Google Maps synchronisation, and priority CSV exports.
+        </div>
+        <a href="index.html#pricing" class="btn-quota-upgrade">
+          <span>Upgrade to Unlimited Pro</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      `;
+      contentArea.appendChild(quotaExceededBox);
+      scrollToBottom();
+      return;
+    }
+
     isExecuting = true;
     updateSendBtnState(true);
 
@@ -529,18 +886,67 @@
 
       const data = await responsePromise;
 
+      // Update quota from backend response
+      if (data.quota) {
+        userQuota.freeQuota = data.quota.freeQuota;
+        userQuota.leadsGenerated = data.quota.leadsGenerated;
+        userQuota.leadsRemaining = data.quota.leadsRemaining;
+        if (currentUser) {
+          currentUser.freeQuota = data.quota.freeQuota;
+          currentUser.leadsGenerated = data.quota.leadsGenerated;
+          currentUser.leadsRemaining = data.quota.leadsRemaining;
+          localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+        }
+        updateQuotaDisplay();
+      }
+
       // Mark thinking as completed
       completeThinkingBox(thinkingBox, data.leads?.length || 6);
 
       // Render Results
       renderPipelineResults(contentArea, data, promptText);
 
+      // Persist conversation turn into history
+      saveCurrentChatTurn(promptText, data.leads, data.plan);
+
     } catch (err) {
       console.warn('Network or live extraction fallback:', err);
-      // Clean high-fidelity synthesis for the targeted place
-      const fallbackData = generateFallbackLeads(promptText, activeCountry, activeState, activeCity, activeVuln);
-      completeThinkingBox(thinkingBox, fallbackData.leads.length);
-      renderPipelineResults(contentArea, fallbackData, promptText);
+      if (err.quotaExceeded || userQuota.leadsRemaining <= 0) {
+        const quotaExceededBox = document.createElement('div');
+        quotaExceededBox.className = 'quota-exceeded-card';
+        quotaExceededBox.innerHTML = `
+          <div class="quota-exceeded-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+            </svg>
+            <span>100 Free Lifetime Leads Limit Reached</span>
+          </div>
+          <div class="quota-exceeded-desc">
+            You have used all 100 free lifetime leads. Upgrade your plan to unlock unlimited lead generation and automated CRM exports.
+          </div>
+          <a href="index.html#pricing" class="btn-quota-upgrade">Upgrade Account →</a>
+        `;
+        contentArea.appendChild(quotaExceededBox);
+      } else {
+        // Clean high-fidelity synthesis for the targeted place
+        const maxAllowed = Math.min(6, Math.max(1, userQuota.leadsRemaining || 6));
+        const fallbackData = generateFallbackLeads(promptText, activeCountry, activeState, activeCity, activeVuln, maxAllowed);
+        
+        // Deduct from quota locally
+        const used = fallbackData.leads.length;
+        userQuota.leadsGenerated = (userQuota.leadsGenerated || 0) + used;
+        userQuota.leadsRemaining = Math.max(0, (userQuota.freeQuota || 100) - userQuota.leadsGenerated);
+        if (currentUser) {
+          currentUser.leadsGenerated = userQuota.leadsGenerated;
+          currentUser.leadsRemaining = userQuota.leadsRemaining;
+          localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+        }
+        updateQuotaDisplay();
+
+        completeThinkingBox(thinkingBox, fallbackData.leads.length);
+        renderPipelineResults(contentArea, fallbackData, promptText);
+        saveCurrentChatTurn(promptText, fallbackData.leads, fallbackData.plan);
+      }
     } finally {
       isExecuting = false;
       updateSendBtnState(false);
@@ -556,15 +962,35 @@
       ? `${prompt} in ${locationContext}`
       : prompt;
 
+    const reqCount = Math.min(6, Math.max(1, userQuota.leadsRemaining || 6));
+
     const res = await fetch('/api/leads/ai-pipeline', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: enrichedPrompt,
         filter: vulnFilter,
-        count: 6
+        count: reqCount,
+        userId: currentUser?.id
       })
     });
+
+    if (res.status === 401) {
+      sessionStorage.setItem('redirect_after_auth', window.location.href);
+      window.location.replace('index.html?auth=signup');
+      throw new Error('Authentication required');
+    }
+
+    if (res.status === 403) {
+      const errData = await res.json().catch(() => ({}));
+      if (errData.quotaExceeded) {
+        userQuota.leadsRemaining = 0;
+        updateQuotaDisplay();
+        const qErr = new Error('Quota exceeded');
+        qErr.quotaExceeded = true;
+        throw qErr;
+      }
+    }
 
     if (!res.ok) throw new Error(`Server responded with ${res.status}`);
     const data = await res.json();
@@ -944,7 +1370,7 @@
   // ------------------------------------------------------------------------
   // HIGH-FIDELITY SYNTHESIS FALLBACK FOR ANY SELECTED COUNTRY & STATE
   // ------------------------------------------------------------------------
-  function generateFallbackLeads(prompt, country, state, city, vuln) {
+  function generateFallbackLeads(prompt, country, state, city, vuln, count = 6) {
     const p = (prompt || '').toLowerCase();
     
     // Resolve location
@@ -967,7 +1393,8 @@
     const prefixList = ["Apex", "Metro Heritage", "Pinnacle", "Sterling", "Summit Elite", "Crown"];
     const phonePrefix = targetCountry === 'United States' ? '+1 (212)' : (targetCountry === 'United Kingdom' ? '+44 20' : '+91 98');
 
-    const leads = prefixList.map((pfx, i) => {
+    const sliceCount = Math.max(1, Math.min(count || 6, prefixList.length));
+    const leads = prefixList.slice(0, sliceCount).map((pfx, i) => {
       const name = `${pfx} ${category.split(' ')[0]} of ${targetCity}`;
       const lostRev = `$${(54000 + i * 9000).toLocaleString()} / yr`;
       const phone = `${phonePrefix} ${Math.floor(200 + Math.random() * 700)}-${Math.floor(1000 + Math.random() * 9000)}`;

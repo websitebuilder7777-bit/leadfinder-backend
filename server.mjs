@@ -94,6 +94,16 @@ function verifySession(userId, token) {
   }
 }
 
+// Ensure lifetime free quota of 100 leads and chat sessions array
+function ensureUserQuota(user) {
+  if (!user) return null;
+  if (typeof user.freeQuota !== 'number') user.freeQuota = 100;
+  if (typeof user.leadsGenerated !== 'number') user.leadsGenerated = 0;
+  user.leadsRemaining = Math.max(0, user.freeQuota - user.leadsGenerated);
+  if (!Array.isArray(user.chatSessions)) user.chatSessions = [];
+  return user;
+}
+
 // ====================================================
 // PASSWORD HASHING & OTP AUTHENTICATION SYSTEM
 // ====================================================
@@ -761,10 +771,47 @@ const server = http.createServer(async (req, res) => {
       const niche = (body.niche || '').trim();
       const city = (body.city || '').trim();
       const filter = (body.filter || 'all').trim();
-      const count = Math.min(Math.max(parseInt(body.count) || 6, 3), 10);
+      const requestedCount = Math.min(Math.max(parseInt(body.count) || 6, 1), 10);
+      const userId = (body.userId || '').trim();
+
+      // Check authentication - Chatbot is only usable by authenticated accounts
+      if (!userId) {
+        return sendJson(res, 401, {
+          success: false,
+          requireAuth: true,
+          error: 'Authentication required. Please create an account or sign in to use the AI Lead Chatbot.'
+        });
+      }
+
+      const users = getUsers();
+      const user = users[userId];
+      if (!user) {
+        return sendJson(res, 401, {
+          success: false,
+          requireAuth: true,
+          error: 'User account not found. Please sign in again.'
+        });
+      }
+
+      ensureUserQuota(user);
+
+      // Check lifetime free quota of 100 leads
+      if (user.leadsRemaining <= 0) {
+        return sendJson(res, 403, {
+          success: false,
+          quotaExceeded: true,
+          error: 'You have reached your 100 free lifetime leads limit. Upgrade to a paid plan to unlock unlimited leads.',
+          freeQuota: user.freeQuota,
+          leadsGenerated: user.leadsGenerated,
+          leadsRemaining: 0
+        });
+      }
+
+      const count = Math.min(requestedCount, user.leadsRemaining);
 
       console.log(`\n======================================================`);
-      console.log(`[Pipeline] New Lead Request Received: "${userPrompt || `${niche} in ${city}`}"`);
+      console.log(`[Pipeline] New Lead Request from ${user.email} (${user.id}): "${userPrompt || `${niche} in ${city}`}"`);
+      console.log(`[Pipeline] Remaining Quota: ${user.leadsRemaining} / ${user.freeQuota} | Requesting: ${count} leads`);
       console.log(`======================================================`);
 
       // 1. Gemini Intent Plan
@@ -793,13 +840,25 @@ const server = http.createServer(async (req, res) => {
       // 3. Gemini Audit & Structuring
       const leads = await enrichAndAuditWithGemini(plan, rawPlaces, userPrompt || searchQuery);
 
+      // 4. Deduct generated leads from user lifetime quota
+      const generatedCount = leads.length;
+      user.leadsGenerated += generatedCount;
+      user.leadsRemaining = Math.max(0, user.freeQuota - user.leadsGenerated);
+      users[userId] = user;
+      saveUsers(users);
+
       return sendJson(res, 200, {
         success: true,
         count: leads.length,
         dataSource: 'Live Commercial Intelligence Network',
         plan,
         scrapedCount: rawPlaces.length,
-        leads
+        leads,
+        quota: {
+          freeQuota: user.freeQuota,
+          leadsGenerated: user.leadsGenerated,
+          leadsRemaining: user.leadsRemaining
+        }
       });
 
     } catch (err) {
@@ -946,7 +1005,11 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
         lastLoginAt: new Date().toISOString(),
         authProvider: 'email_password',
         savedLeads: [],
-        history: []
+        history: [],
+        freeQuota: 100,
+        leadsGenerated: 0,
+        leadsRemaining: 100,
+        chatSessions: []
       };
 
       users[userId] = newUser;
@@ -964,11 +1027,17 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
           name: newUser.name,
           email: newUser.email,
           picture: newUser.picture,
-          sessionToken: token
+          sessionToken: token,
+          freeQuota: newUser.freeQuota,
+          leadsGenerated: newUser.leadsGenerated,
+          leadsRemaining: newUser.leadsRemaining
         },
         sessionToken: token,
         savedLeads: [],
-        history: []
+        history: [],
+        freeQuota: newUser.freeQuota,
+        leadsGenerated: newUser.leadsGenerated,
+        leadsRemaining: newUser.leadsRemaining
       });
     } catch (err) {
       console.error('[Auth Verify-OTP Error]', err);
@@ -1013,11 +1082,12 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
         });
       }
 
+      ensureUserQuota(user);
       user.lastLoginAt = new Date().toISOString();
       saveUsers(users);
 
       const token = generateSessionToken(user.id);
-      console.log(`[Auth] User logged in: ${user.email} (${user.id})`);
+      console.log(`[Auth] User logged in: ${user.email} (${user.id}) | Quota: ${user.leadsRemaining} / ${user.freeQuota}`);
 
       return sendJson(res, 200, {
         success: true,
@@ -1026,11 +1096,17 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
           name: user.name,
           email: user.email,
           picture: user.picture,
-          sessionToken: token
+          sessionToken: token,
+          freeQuota: user.freeQuota,
+          leadsGenerated: user.leadsGenerated,
+          leadsRemaining: user.leadsRemaining
         },
         sessionToken: token,
         savedLeads: user.savedLeads || [],
-        history: user.history || []
+        history: user.history || [],
+        freeQuota: user.freeQuota,
+        leadsGenerated: user.leadsGenerated,
+        leadsRemaining: user.leadsRemaining
       });
     } catch (err) {
       console.error('[Auth Login Error]', err);
@@ -1245,6 +1321,7 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
         history: []
       };
 
+      ensureUserQuota(existing);
       existing.lastLoginAt = new Date().toISOString();
       existing.name = user.name || existing.name;
       existing.email = user.email || existing.email;
@@ -1252,7 +1329,7 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
       users[user.id] = existing;
       saveUsers(users);
 
-      console.log(`[Auth] User authenticated: ${existing.email} (${existing.id}) | Saved leads: ${(existing.savedLeads || []).length}`);
+      console.log(`[Auth] User authenticated: ${existing.email} (${existing.id}) | Quota: ${existing.leadsRemaining}/${existing.freeQuota} | Saved leads: ${(existing.savedLeads || []).length}`);
 
       const token = generateSessionToken(existing.id);
 
@@ -1263,11 +1340,17 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
           name: existing.name,
           email: existing.email,
           picture: existing.picture,
-          sessionToken: token
+          sessionToken: token,
+          freeQuota: existing.freeQuota,
+          leadsGenerated: existing.leadsGenerated,
+          leadsRemaining: existing.leadsRemaining
         },
         sessionToken: token,
         savedLeads: existing.savedLeads || [],
-        history: existing.history || []
+        history: existing.history || [],
+        freeQuota: existing.freeQuota,
+        leadsGenerated: existing.leadsGenerated,
+        leadsRemaining: existing.leadsRemaining
       });
     } catch (err) {
       console.error('[Auth Error]', err);
@@ -1276,7 +1359,7 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
   }
 
   // ----------------------------------------------------
-  // API ROUTE: Get User Data (Saved Leads & Search History)
+  // API ROUTE: Get User Data (Saved Leads, History, Quota & Chats)
   // ----------------------------------------------------
   if (pathname === '/api/user/data' && req.method === 'GET') {
     const userId = parsedUrl.searchParams.get('userId');
@@ -1284,17 +1367,149 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
     const users = getUsers();
     const user = users[userId];
     if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+    ensureUserQuota(user);
     return sendJson(res, 200, {
       success: true,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        picture: user.picture
+        picture: user.picture,
+        freeQuota: user.freeQuota,
+        leadsGenerated: user.leadsGenerated,
+        leadsRemaining: user.leadsRemaining
       },
       savedLeads: user.savedLeads || [],
-      history: user.history || []
+      history: user.history || [],
+      freeQuota: user.freeQuota,
+      leadsGenerated: user.leadsGenerated,
+      leadsRemaining: user.leadsRemaining,
+      chatSessions: (user.chatSessions || []).map(s => ({
+        id: s.id,
+        title: s.title || 'Untitled Lead Mission',
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+        turnCount: (s.turns || []).length,
+        leadsCount: s.leadsCount || (s.turns ? s.turns.reduce((acc, t) => acc + (t.leads?.length || 0), 0) : 0)
+      }))
     });
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Live Quota Checker
+  // ----------------------------------------------------
+  if (pathname === '/api/user/quota' && req.method === 'GET') {
+    const userId = parsedUrl.searchParams.get('userId');
+    if (!userId) return sendJson(res, 400, { success: false, error: 'Missing userId parameter' });
+    const users = getUsers();
+    const user = users[userId];
+    if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+    ensureUserQuota(user);
+    return sendJson(res, 200, {
+      success: true,
+      freeQuota: user.freeQuota,
+      leadsGenerated: user.leadsGenerated,
+      leadsRemaining: user.leadsRemaining
+    });
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Get User Chat Sessions
+  // ----------------------------------------------------
+  if (pathname === '/api/user/chats' && req.method === 'GET') {
+    const userId = parsedUrl.searchParams.get('userId');
+    if (!userId) return sendJson(res, 400, { success: false, error: 'Missing userId parameter' });
+    const users = getUsers();
+    const user = users[userId];
+    if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+    ensureUserQuota(user);
+    const sessions = (user.chatSessions || []).map(s => ({
+      id: s.id,
+      title: s.title || 'Untitled Lead Mission',
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+      turnsCount: (s.turns || []).length,
+      leadsCount: s.leadsCount || (s.turns ? s.turns.reduce((acc, t) => acc + (t.leads?.length || 0), 0) : 0)
+    }));
+    return sendJson(res, 200, { success: true, sessions });
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Save / Update Chat Session
+  // ----------------------------------------------------
+  if (pathname === '/api/user/chats' && req.method === 'POST') {
+    try {
+      const body = await parseRequestBody(req);
+      const { userId, session } = body;
+      if (!userId || !session || !session.id) {
+        return sendJson(res, 400, { success: false, error: 'Missing userId or session object' });
+      }
+      const users = getUsers();
+      const user = users[userId];
+      if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+      ensureUserQuota(user);
+
+      const existingIdx = user.chatSessions.findIndex(s => s.id === session.id);
+      if (existingIdx >= 0) {
+        user.chatSessions[existingIdx] = {
+          ...user.chatSessions[existingIdx],
+          ...session,
+          updatedAt: new Date().toISOString()
+        };
+      } else {
+        user.chatSessions.unshift({
+          ...session,
+          createdAt: session.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      // Cap at 50 sessions
+      if (user.chatSessions.length > 50) {
+        user.chatSessions = user.chatSessions.slice(0, 50);
+      }
+
+      users[userId] = user;
+      saveUsers(users);
+
+      return sendJson(res, 200, { success: true, sessionId: session.id });
+    } catch (err) {
+      console.error('[Save Chat Error]', err);
+      return sendJson(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Get Specific Chat Session Details
+  // ----------------------------------------------------
+  if (pathname === '/api/user/chats/detail' && req.method === 'GET') {
+    const userId = parsedUrl.searchParams.get('userId');
+    const sessionId = parsedUrl.searchParams.get('sessionId');
+    if (!userId || !sessionId) return sendJson(res, 400, { success: false, error: 'Missing userId or sessionId' });
+    const users = getUsers();
+    const user = users[userId];
+    if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+    ensureUserQuota(user);
+    const session = (user.chatSessions || []).find(s => s.id === sessionId);
+    if (!session) return sendJson(res, 404, { success: false, error: 'Chat session not found' });
+    return sendJson(res, 200, { success: true, session });
+  }
+
+  // ----------------------------------------------------
+  // API ROUTE: Delete Chat Session
+  // ----------------------------------------------------
+  if (pathname === '/api/user/chats' && req.method === 'DELETE') {
+    const userId = parsedUrl.searchParams.get('userId');
+    const sessionId = parsedUrl.searchParams.get('sessionId');
+    if (!userId || !sessionId) return sendJson(res, 400, { success: false, error: 'Missing userId or sessionId' });
+    const users = getUsers();
+    const user = users[userId];
+    if (!user) return sendJson(res, 404, { success: false, error: 'User not found' });
+    ensureUserQuota(user);
+    user.chatSessions = (user.chatSessions || []).filter(s => s.id !== sessionId);
+    users[userId] = user;
+    saveUsers(users);
+    return sendJson(res, 200, { success: true, message: 'Chat session deleted' });
   }
 
   // ----------------------------------------------------

@@ -1260,3 +1260,293 @@ body.chat-body-dark {
     display: none;
   }
 }
+
+/* ==========================================================================
+   LIVE QUOTA BADGE & USER PROFILE STYLES
+   ========================================================================== */
+.quota-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111111;
+  border: 1px solid #282828;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.quota-badge-pill.warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.quota-badge-pill.danger {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.quota-icon {
+  font-size: 13px;
+  color: #F59E0B;
+}
+
+.quota-text-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quota-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.quota-val {
+  font-weight: 700;
+  color: var(--text-white);
+  font-size: 11.5px;
+}
+
+.quota-bar-track {
+  width: 40px;
+  height: 5px;
+  background: #222222;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.quota-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981, #3B82F6);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.quota-badge-pill.warning .quota-bar-fill {
+  background: #F59E0B;
+}
+
+.quota-badge-pill.danger .quota-bar-fill {
+  background: #EF4444;
+}
+
+.chat-user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #121212;
+  border: 1px solid #242424;
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-white);
+}
+
+.chat-user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #222222;
+  border: 1px solid #333333;
+}
+
+.chat-logout-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.chat-logout-btn:hover {
+  background: #181818;
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================================================
+   PERSISTENT CHAT HISTORY SIDEBAR STYLES
+   ========================================================================== */
+.chat-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 8px 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.chat-history-count {
+  font-size: 11px;
+  background: #181818;
+  color: var(--text-muted);
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+}
+
+.chat-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.chat-history-empty {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  background: #0B0B0B;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-subtle);
+  text-align: center;
+}
+
+.chat-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #0E0E0E;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.chat-history-item:hover {
+  background: #161616;
+  border-color: var(--border-medium);
+}
+
+.chat-history-item.active {
+  background: #111D33;
+  border-color: var(--accent-blue);
+}
+
+.chat-history-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-history-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-history-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.chat-history-leads-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 9.5px;
+}
+
+.chat-history-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0.5;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.chat-history-delete-btn:hover {
+  opacity: 1;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.14);
+}
+
+/* ==========================================================================
+   QUOTA EXCEEDED CARD
+   ========================================================================== */
+.quota-exceeded-card {
+  background: #140E0A;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeInQuota 0.25s ease-out;
+}
+
+@keyframes fadeInQuota {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.quota-exceeded-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F59E0B;
+}
+
+.quota-exceeded-desc {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.quota-exceeded-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.btn-quota-upgrade {
+  background: #2563EB;
+  color: #FFFFFF !important;
+  text-decoration: none;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+
+.btn-quota-upgrade:hover {
+  background: #1D4ED8;
+}
+

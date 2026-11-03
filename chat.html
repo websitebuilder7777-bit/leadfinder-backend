@@ -7,6 +7,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Instant Auth Gate Bootstrap: Unauthenticated Visitors Are Redirected to Create Account -->
+  <script>
+    (function() {
+      try {
+        const session = localStorage.getItem('xyz_user_session');
+        if (!session) {
+          sessionStorage.setItem('redirect_after_auth', window.location.href);
+          window.location.replace('index.html?auth=signup');
+        }
+      } catch(e){}
+    })();
+  </script>
+
   <link rel="stylesheet" href="chat.css">
 </head>
 <body class="chat-body-dark">
@@ -35,21 +49,36 @@
         <span class="active-loc-dot"></span>
         <span id="nav-target-label">📍 Bangalore, Karnataka (India)</span>
       </div>
+
+      <!-- Small Live Leads Quota Badge -->
+      <div class="quota-badge-pill" id="quota-badge-pill" title="Free Lifetime Leads Quota (100 Included)">
+        <span class="quota-icon">⚡</span>
+        <div class="quota-text-wrap">
+          <span class="quota-label">Quota:</span>
+          <span class="quota-val"><strong id="quota-remaining-count">100</strong> / 100 Left</span>
+        </div>
+        <div class="quota-bar-track">
+          <div class="quota-bar-fill" id="quota-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
     </div>
 
     <div class="nav-right-group">
+      <div class="chat-user-profile-badge" id="chat-user-badge">
+        <img id="chat-user-avatar" class="chat-user-avatar" src="" alt="Avatar" />
+        <span id="chat-user-name" class="chat-user-name">User</span>
+      </div>
       <a href="index.html" class="nav-action-btn" title="Back to main overview">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        <span>Market Overview</span>
+        <span>Overview</span>
       </a>
-      <button id="btn-reset-chat" class="nav-action-btn" title="Start fresh session">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="1 4 1 10 7 10"/>
-          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      <button id="btn-chat-logout" class="chat-logout-btn" title="Sign out of account">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
         </svg>
-        <span>Reset Chat</span>
+        <span>Sign out</span>
       </button>
     </div>
   </header>
@@ -70,6 +99,17 @@
             </svg>
             <span>New Lead Mission</span>
           </button>
+        </div>
+
+        <!-- Recent Conversations (Persistent Chat History) -->
+        <div class="chat-history-section">
+          <div class="dark-section-label">
+            <span>Recent Conversations</span>
+            <span class="chat-history-count" id="chat-history-count">0</span>
+          </div>
+          <div class="chat-history-list" id="chat-history-list">
+            <div class="chat-history-empty" id="chat-history-empty">No saved chats yet</div>
+          </div>
         </div>
 
         <!-- 1. VULNERABILITY FOCUS (BIG FONTS) -->
