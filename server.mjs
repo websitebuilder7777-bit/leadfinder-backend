@@ -189,7 +189,33 @@ async function sendOtpEmail(toEmail, otpCode, type = 'signup') {
     </div>
   `;
 
-  // 1. Try HTTPS Resend API if key is present (100% port 443 cloud firewall proof)
+  // 1. Try HTTPS Cloud Dispatcher (delivers via Gmail SMTP, completely bypasses cloud host port blocks)
+  const VERCEL_MAILER_URL = process.env.VERCEL_MAILER_URL || 'https://leadfinder-app-roan.vercel.app/internal-api/send-email';
+  const INTERNAL_MAIL_SECRET = process.env.INTERNAL_MAIL_SECRET || 'xyz_internal_otp_dispatcher_99';
+
+  try {
+    const vRes = await fetch(VERCEL_MAILER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: INTERNAL_MAIL_SECRET,
+        to: toEmail,
+        subject: subject,
+        html: htmlBody
+      })
+    });
+    if (vRes.ok) {
+      const vData = await vRes.json();
+      if (vData && vData.delivered) {
+        console.log('[Email Gateway: Cloud Dispatcher] Message sent successfully via Gmail:', vData.messageId);
+        return { success: true, delivered: true, messageId: vData.messageId, provider: 'cloud_gmail' };
+      }
+    }
+  } catch (vErr) {
+    console.warn('[Email Gateway: Cloud Dispatcher Warning]', vErr.message);
+  }
+
+  // 2. Try HTTPS Resend API if key is present (100% port 443 cloud firewall proof)
   if (RESEND_API_KEY) {
     try {
       const res = await fetch('https://api.resend.com/emails', {

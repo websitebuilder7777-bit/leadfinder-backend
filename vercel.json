@@ -1,6 +1,10 @@
 {
-  "version": 2,
+  "cleanUrls": true,
   "rewrites": [
+    {
+      "source": "/internal-api/:match*",
+      "destination": "/api/:match*"
+    },
     {
       "source": "/api/:match*",
       "destination": "https://leadfinder-backend-k1a9.onrender.com/api/:match*"
