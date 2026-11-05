@@ -1335,6 +1335,63 @@ body.chat-body-dark {
   .active-loc-pill {
     display: none;
   }
+
+  .brand-version-badge {
+    display: none;
+  }
+
+  .dark-top-nav {
+    padding: 0 10px;
+    height: 52px;
+  }
+
+  .nav-left-group {
+    gap: 8px;
+  }
+
+  .nav-right-group {
+    gap: 6px;
+  }
+
+  .quota-badge-pill {
+    padding: 3px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .quota-label {
+    display: none;
+  }
+
+  .quota-bar-track {
+    display: none;
+  }
+
+  .chat-user-name {
+    display: none;
+  }
+
+  .chat-user-profile-badge {
+    padding: 2px 4px;
+    background: transparent;
+    border: none;
+  }
+
+  .nav-action-btn span,
+  .chat-logout-btn span {
+    display: none;
+  }
+
+  .nav-action-btn,
+  .chat-logout-btn {
+    padding: 6px 8px;
+    min-width: 34px;
+    justify-content: center;
+  }
+
+  .prompt-textarea-wrapper {
+    padding: 10px 12px;
+  }
 }
 
 /* ==========================================================================

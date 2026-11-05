@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrandLeads Blog — B2B Lead Generation, Agency Growth & Outbound Intelligence</title>
+  <meta name="description" content="Actionable guides, teardowns, and battle-tested frameworks for finding high-value local B2B leads on Google Maps, pitching missing websites, and scaling agency outbound.">
+
+  <!-- Open Graph / SEO -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BrandLeads Blog — B2B Lead Generation & Agency Intelligence">
+  <meta property="og:description" content="Actionable guides, teardowns, and frameworks for finding high-value local B2B leads on Google Maps.">
+  <meta property="og:url" content="https://leadfinder-app-roan.vercel.app/blog">
+
+  <!-- Google Fonts: Newsreader (Editorial Serif) & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Theme Bootstrap Script -->
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem('xyz_theme');
+        if (savedTheme === 'night') {
+          document.documentElement.setAttribute('data-theme', 'night');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'day');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Dedicated Blog Listing Styles */
+    .blog-hero {
+      padding: 90px 0 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .blog-tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: var(--glass-card-bg);
+      border: 1px solid var(--border-medium);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--brand-navy);
+      margin-bottom: 20px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    html[data-theme="night"] .blog-tag-badge {
+      color: #38BDF8;
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .blog-hero-title {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(34px, 5.5vw, 54px);
+      font-weight: 600;
+      line-height: 1.15;
+      color: var(--text-black);
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .blog-hero-sub {
+      font-size: clamp(15px, 2.2vw, 18px);
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin: 0 auto 30px;
+    }
+
+    /* Category Filter Bar */
+    .blog-filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+      padding: 0 16px;
+    }
+
+    .blog-filter-chip {
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .blog-filter-chip:hover, .blog-filter-chip.active {
+      background: var(--brand-navy);
+      color: #FFFFFF;
+      border-color: var(--brand-navy);
+      box-shadow: 0 4px 14px rgba(10, 25, 49, 0.2);
+    }
+    html[data-theme="night"] .blog-filter-chip {
+      background: #141414;
+      border-color: #262626;
+      color: #9CA3AF;
+    }
+    html[data-theme="night"] .blog-filter-chip:hover,
+    html[data-theme="night"] .blog-filter-chip.active {
+      background: #38BDF8;
+      color: #000000;
+      border-color: #38BDF8;
+      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Featured Post Spotlight Card */
+    .featured-post-card {
+      background: var(--glass-card-bg);
+      border: 1px solid var(--border-medium);
+      border-radius: 24px;
+      padding: 38px 42px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
+      margin-bottom: 60px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 40px;
+      align-items: center;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .featured-post-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    html[data-theme="night"] .featured-post-card {
+      background: rgba(18, 18, 18, 0.85);
+      border-color: #262626;
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
+    }
+    html[data-theme="night"] .featured-post-card:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .post-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .post-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #0284C7;
+    }
+    html[data-theme="night"] .post-tag {
+      background: rgba(56, 189, 248, 0.18);
+      color: #38BDF8;
+    }
+
+    .post-read-time {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .featured-post-title {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--text-black);
+      margin-bottom: 14px;
+      letter-spacing: -0.015em;
+    }
+    .featured-post-title a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .featured-post-title a:hover {
+      color: #38BDF8;
+    }
+
+    .featured-post-excerpt {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .post-author-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .post-author-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    html[data-theme="night"] .post-author-avatar {
+      background: linear-gradient(135deg, #1E293B 0%, #38BDF8 100%);
+      color: #000000;
+    }
+
+    .post-author-meta {
+      font-size: 13.5px;
+    }
+    .post-author-name {
+      font-weight: 700;
+      color: var(--text-black);
+    }
+    .post-author-date {
+      color: var(--text-muted);
+      font-size: 12.5px;
+    }
+
+    .featured-visual-box {
+      background: linear-gradient(145deg, rgba(10, 25, 49, 0.05) 0%, rgba(56, 189, 248, 0.1) 100%);
+      border: 1px solid var(--border-medium);
+      border-radius: 20px;
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    html[data-theme="night"] .featured-visual-box {
+      background: linear-gradient(145deg, #121824 0%, #0F172A 100%);
+      border-color: #262626;
+    }
+
+    .visual-stat-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    html[data-theme="night"] .visual-stat-pill {
+      background: #181818;
+      border-color: #282828;
+    }
+
+    .visual-stat-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: #38BDF8;
+    }
+    .visual-stat-label {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+    }
+
+    /* Grid of Secondary Articles */
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 30px;
+      margin-bottom: 70px;
+    }
+
+    .blog-card {
+      background: var(--glass-card-bg);
+      border: 1px solid var(--border-medium);
+      border-radius: 20px;
+      padding: 30px 28px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .blog-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.06);
+    }
+    html[data-theme="night"] .blog-card {
+      background: rgba(18, 18, 18, 0.85);
+      border-color: #262626;
+    }
+    html[data-theme="night"] .blog-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .blog-card-title {
+      font-family: 'Newsreader', serif;
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--text-black);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .blog-card-title a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .blog-card-title a:hover {
+      color: #38BDF8;
+    }
+
+    .blog-card-desc {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .blog-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    html[data-theme="night"] .blog-card-footer {
+      border-top-color: #222222;
+    }
+
+    /* Bottom Conversion CTA */
+    .blog-cta-banner {
+      background: linear-gradient(135deg, var(--brand-navy) 0%, #0F2A4A 100%);
+      border-radius: 24px;
+      padding: 50px 40px;
+      text-align: center;
+      color: #FFFFFF;
+      margin-bottom: 80px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(10, 25, 49, 0.25);
+    }
+    html[data-theme="night"] .blog-cta-banner {
+      background: linear-gradient(135deg, #0D1626 0%, #050B14 100%);
+      border: 1px solid #262626;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    }
+
+    .blog-cta-title {
+      font-family: 'Newsreader', serif;
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: #FFFFFF;
+    }
+
+    .blog-cta-desc {
+      font-size: 16px;
+      color: #CBD5E1;
+      max-width: 600px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    .btn-blog-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #38BDF8;
+      color: #0A192F;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 14px 28px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.35);
+    }
+    .btn-blog-cta:hover {
+      transform: translateY(-2px);
+      background: #7DD3FC;
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.5);
+    }
+
+    @media (max-width: 900px) {
+      .featured-post-card {
+        grid-template-columns: 1fr;
+        padding: 30px 24px;
+        gap: 28px;
+      }
+      .blog-grid {
+        grid-template-columns: 1fr;
+      }
+      .blog-cta-banner {
+        padding: 36px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Liquid Glass Mesh Aurora Background -->
+  <div class="liquid-mesh-background" aria-hidden="true">
+    <div class="liquid-orb-1"></div>
+    <div class="liquid-orb-2"></div>
+    <div class="liquid-orb-3"></div>
+  </div>
+
+  <!-- SITE HEADER -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-row">
+        
+        <!-- Official BrandLeads Monogram + Wordmark -->
+        <a href="index.html" class="brand-link" aria-label="BrandLeads Home">
+          <img src="assets/brandleads-logo-white.png" alt="BrandLeads" class="brand-logo-img brand-logo-dark-theme" height="34" />
+          <img src="assets/brandleads-logo-dark.png" alt="BrandLeads" class="brand-logo-img brand-logo-light-theme" height="34" />
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <nav aria-label="Main Navigation">
+          <ul class="nav-links">
+            <li><a href="index.html" class="nav-link skiper-css-link">Home</a></li>
+            <li><a href="chat.html" class="nav-link skiper-css-link nav-link-ai" style="color: #38BDF8; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><span class="live-ai-pulse-dot"></span>AI Chatbot</a></li>
+            <li><a href="blog.html" class="nav-link skiper-css-link active" style="font-weight: 700;">Blog</a></li>
+            <li><a href="index.html#pricing" class="nav-link skiper-css-link">Pricing</a></li>
+            <li><a href="terms.html" class="nav-link skiper-css-link">Terms</a></li>
+          </ul>
+        </nav>
+
+        <!-- Right Header Actions -->
+        <div class="header-ctas">
+          <!-- Day / Night Mode Switcher Pill -->
+          <div class="theme-switch-pill" id="theme-switch-pill" role="radiogroup" aria-label="Day or Night Mode">
+            <button type="button" class="theme-switch-btn active" id="theme-btn-day" data-mode="day" aria-checked="true" title="Switch to Day Mode (Light)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <span>Day</span>
+            </button>
+            <button type="button" class="theme-switch-btn" id="theme-btn-night" data-mode="night" aria-checked="false" title="Switch to Night Mode (Dark)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <span>Night</span>
+            </button>
+          </div>
+
+          <a href="chat.html" class="btn-pill-black" style="display: flex; align-items: center; gap: 6px;">
+            <span>Launch AI Agent</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </a>
+
+          <!-- Mobile Nav Toggle Button -->
+          <button id="btn-mobile-nav" class="mobile-nav-toggle" aria-label="Open Navigation Menu" type="button">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE NAVIGATION DRAWER -->
+  <div id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true">
+    <div class="mobile-drawer-header">
+      <a href="index.html" class="brand-link">
+        <img src="assets/brandleads-logo-white.png" alt="BrandLeads" class="brand-logo-img brand-logo-dark-theme" height="26" />
+        <img src="assets/brandleads-logo-dark.png" alt="BrandLeads" class="brand-logo-img brand-logo-light-theme" height="26" />
+      </a>
+      <button id="mobile-drawer-close" class="mobile-drawer-close-btn" aria-label="Close Navigation" type="button">✕</button>
+    </div>
+    <div class="mobile-drawer-body">
+      <ul class="mobile-drawer-links">
+        <li><a href="index.html" class="mobile-drawer-link">Home</a></li>
+        <li><a href="chat.html" class="mobile-drawer-link highlight-ai">⚡ AI Chatbot Agent</a></li>
+        <li><a href="blog.html" class="mobile-drawer-link active">Blog & Guides</a></li>
+        <li><a href="how-to-find-leads-google-maps.html" class="mobile-drawer-link">How to Find Leads Guide</a></li>
+        <li><a href="index.html#pricing" class="mobile-drawer-link">Pricing Plans</a></li>
+        <li><a href="terms.html" class="mobile-drawer-link">Terms & Conditions</a></li>
+      </ul>
+      <div class="mobile-drawer-actions">
+        <a href="chat.html" class="btn-drawer-cta">Launch AI Agent (100 Free Leads)</a>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div class="container">
+      
+      <!-- HERO SECTION -->
+      <section class="blog-hero">
+        <div class="blog-tag-badge">
+          <span>The Outbound Intelligence Dispatch</span>
+        </div>
+        <h1 class="blog-hero-title">Actionable Strategies for Modern Agency Growth</h1>
+        <p class="blog-hero-sub">
+          Deep-dive teardowns, revenue leakage calculations, and verified outbound scripts for uncovering high-intent local businesses losing clients to broken digital presence.
+        </p>
+
+        <!-- Category Filters -->
+        <div class="blog-filter-bar">
+          <button type="button" class="blog-filter-chip active">All Guides</button>
+          <button type="button" class="blog-filter-chip">Google Maps Prospecting</button>
+          <button type="button" class="blog-filter-chip">Cold Outreach Scripts</button>
+          <button type="button" class="blog-filter-chip">Agency Pricing</button>
+          <button type="button" class="blog-filter-chip">Audit Frameworks</button>
+        </div>
+      </section>
+
+      <!-- FEATURED ARTICLE SPOTLIGHT -->
+      <section>
+        <div class="featured-post-card">
+          <div class="featured-post-content">
+            <div class="post-badge-row">
+              <span class="post-tag">Featured Masterclass</span>
+              <span class="post-read-time">⏱️ 12 min read</span>
+              <span class="post-read-time">• Updated 2026</span>
+            </div>
+            
+            <h2 class="featured-post-title">
+              <a href="how-to-find-leads-google-maps.html">
+                How to Find High-Value B2B Leads on Google Maps (The 2026 Agency Playbook)
+              </a>
+            </h2>
+
+            <p class="featured-post-excerpt">
+              The exact step-by-step framework top web design agencies, SEO consultants, and B2B cold emailers use to pinpoint 6-figure local businesses missing websites, convert unclaimed Google profiles, and generate 28%+ cold outreach response rates.
+            </p>
+
+            <div class="post-author-row">
+              <div class="post-author-avatar">BL</div>
+              <div class="post-author-meta">
+                <div class="post-author-name">BrandLeads Research Team</div>
+                <div class="post-author-date">Published for Agency Growth</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <a href="how-to-find-leads-google-maps.html" class="btn-pill-black" style="display: inline-flex; align-items: center; gap: 8px;">
+                <span>Read Complete Guide</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="featured-visual-box">
+            <div class="visual-stat-pill">
+              <div>
+                <div class="visual-stat-val">34.8%</div>
+                <div class="visual-stat-label">Local businesses missing valid websites</div>
+              </div>
+              <span style="font-size: 24px;">🌐</span>
+            </div>
+            <div class="visual-stat-pill">
+              <div>
+                <div class="visual-stat-val">28.4%</div>
+                <div class="visual-stat-label">Average cold email positive reply rate</div>
+              </div>
+              <span style="font-size: 24px;">📬</span>
+            </div>
+            <div class="visual-stat-pill">
+              <div>
+                <div class="visual-stat-val">$3,200</div>
+                <div class="visual-stat-label">Median web design retainer deal size</div>
+              </div>
+              <span style="font-size: 24px;">💼</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EDITORIAL GRID -->
+      <section>
+        <div style="margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between;">
+          <h3 style="font-size: 22px; font-weight: 800; color: var(--text-black); letter-spacing: -0.01em;">
+            Recent Playbooks & Case Studies
+          </h3>
+          <span style="font-size: 13px; color: var(--text-muted);">Showing 4 verified guides</span>
+        </div>
+
+        <div class="blog-grid">
+          
+          <!-- Card 1 -->
+          <article class="blog-card">
+            <div class="post-badge-row">
+              <span class="post-tag">Cold Outreach</span>
+              <span class="post-read-time">7 min read</span>
+            </div>
+            <h4 class="blog-card-title">
+              <a href="how-to-find-leads-google-maps.html#outreach-playbook">
+                5 Cold Email Templates That Get 28% Reply Rates from Local Business Owners
+              </a>
+            </h4>
+            <p class="blog-card-desc">
+              Why traditional pitch decks get deleted in 3 seconds, and how pointing out an exact lost revenue figure and missing website URL gets owners to respond on their cell phones.
+            </p>
+            <div class="blog-card-footer">
+              <span>By Marcus Sterling</span>
+              <a href="how-to-find-leads-google-maps.html#outreach-playbook" style="color: #38BDF8; font-weight: 700; text-decoration: none;">View Scripts →</a>
+            </div>
+          </article>
+
+          <!-- Card 2 -->
+          <article class="blog-card">
+            <div class="post-badge-row">
+              <span class="post-tag">Agency Pricing</span>
+              <span class="post-read-time">9 min read</span>
+            </div>
+            <h4 class="blog-card-title">
+              <a href="how-to-find-leads-google-maps.html#revenue-math">
+                How to Price and Pitch a $3,500 Local Website Over the Phone
+              </a>
+            </h4>
+            <p class="blog-card-desc">
+              Stop selling "redesigns". Discover how to anchor your pricing against the customer's average lifetime value so a $3,500 digital package feels like an obvious financial investment.
+            </p>
+            <div class="blog-card-footer">
+              <span>By Elena Chen</span>
+              <a href="how-to-find-leads-google-maps.html#revenue-math" style="color: #38BDF8; font-weight: 700; text-decoration: none;">Read Strategy →</a>
+            </div>
+          </article>
+
+          <!-- Card 3 -->
+          <article class="blog-card">
+            <div class="post-badge-row">
+              <span class="post-tag">Google Business Profile</span>
+              <span class="post-read-time">6 min read</span>
+            </div>
+            <h4 class="blog-card-title">
+              <a href="how-to-find-leads-google-maps.html#vulnerabilities">
+                Unclaimed Google Business Profiles: The Easiest $1,500/Month Agency Retainer
+              </a>
+            </h4>
+            <p class="blog-card-desc">
+              When a business profile says "Own this business?", competitors can hijack reviews and phone numbers. Here is how to use verification as an urgent wedge product.
+            </p>
+            <div class="blog-card-footer">
+              <span>By Dev Prakash</span>
+              <a href="how-to-find-leads-google-maps.html#vulnerabilities" style="color: #38BDF8; font-weight: 700; text-decoration: none;">Explore Retainer →</a>
+            </div>
+          </article>
+
+          <!-- Card 4 -->
+          <article class="blog-card">
+            <div class="post-badge-row">
+              <span class="post-tag">Technical Diagnostics</span>
+              <span class="post-read-time">8 min read</span>
+            </div>
+            <h4 class="blog-card-title">
+              <a href="how-to-find-leads-google-maps.html#vulnerabilities">
+                Why 38% of Established Local Businesses Still Don't Have an SSL Certificate
+              </a>
+            </h4>
+            <p class="blog-card-desc">
+              Chrome and Safari throw full-screen red warning security screens when customers click HTTP links. Learn how to convert broken SSL errors into instant emergency retainers.
+            </p>
+            <div class="blog-card-footer">
+              <span>By Sarah Jenkins</span>
+              <a href="how-to-find-leads-google-maps.html#vulnerabilities" style="color: #38BDF8; font-weight: 700; text-decoration: none;">See Diagnostics →</a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- CONVERSION CTA BANNER -->
+      <section>
+        <div class="blog-cta-banner">
+          <h3 class="blog-cta-title">Stop Prospecting Manually on Google Maps</h3>
+          <p class="blog-cta-desc">
+            BrandLeads scans entire municipal corridors in seconds, tests domains for SSL and live response codes, and delivers qualified leads with revenue gap diagnostics directly to your pipeline.
+          </p>
+          <a href="chat.html" class="btn-blog-cta">
+            <span>Scan Your First 100 Leads Free</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- SITE FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-row-top">
+        <div>
+          <a href="index.html" class="brand-link" style="margin-bottom: 12px;" aria-label="BrandLeads Home">
+            <img src="assets/brandleads-logo-white.png" alt="BrandLeads" class="brand-logo-img brand-logo-dark-theme" height="30" />
+            <img src="assets/brandleads-logo-dark.png" alt="BrandLeads" class="brand-logo-img brand-logo-light-theme" height="30" />
+          </a>
+          <p style="font-size: 13px; color: var(--text-secondary); max-width: 280px; line-height: 1.6;">
+            Next-generation autonomous B2B outbound intelligence engine uncovering local businesses losing revenue to missing digital infrastructure.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 48px; flex-wrap: wrap;">
+          <div class="footer-nav-col">
+            <h5>Platform</h5>
+            <a href="index.html#console">Live Console</a>
+            <a href="index.html#methodology">Methodology</a>
+            <a href="index.html#pricing">Pricing Plans</a>
+            <a href="chat.html">AI Chatbot Agent</a>
+          </div>
+          <div class="footer-nav-col">
+            <h5>Resources & Guides</h5>
+            <a href="blog.html">Blog Overview</a>
+            <a href="how-to-find-leads-google-maps.html">How to Find Leads Guide</a>
+            <a href="index.html#case-study">Vanguard Case Study</a>
+          </div>
+          <div class="footer-nav-col">
+            <h5>Legal</h5>
+            <a href="terms.html">Terms of Service</a>
+            <a href="terms.html#public-data">Data Privacy</a>
+            <a href="terms.html#anti-spam">Anti-Spam Policy</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-row-bottom">
+        <div>© 2026 BrandLeads Inc. All rights reserved.</div>
+        <div style="display: flex; gap: 16px;">
+          <span>Status: All Systems Operational</span>
+          <span>Google Places Grounded</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

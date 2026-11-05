@@ -240,6 +240,7 @@ function showToast(message, type = 'info') {
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeMode();
+  initMobileNavDrawer();
   initAiPromptBar();
   initScanner();
   initPresetChips();
@@ -314,6 +315,73 @@ function initThemeMode() {
     applyTheme('night');
     showToast('🌙 Night mode enabled', 'info');
   });
+}
+
+/* ==========================================================================
+   MOBILE NAVIGATION DRAWER CONTROLLER
+   ========================================================================== */
+
+function initMobileNavDrawer() {
+  const toggleBtn = document.getElementById('btn-mobile-nav');
+  const drawer = document.getElementById('mobile-nav-drawer');
+  const closeBtn = document.getElementById('mobile-drawer-close');
+  const drawerSignoutBtn = document.getElementById('drawer-signout-btn');
+  
+  if (!toggleBtn || !drawer) return;
+
+  // Create backdrop if not already created
+  let backdrop = document.querySelector('.mobile-drawer-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'mobile-drawer-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  const openDrawer = () => {
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeDrawer = () => {
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (drawer.classList.contains('open')) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer.classList.contains('open')) {
+      closeDrawer();
+    }
+  });
+
+  // Close drawer when any link inside is clicked
+  drawer.querySelectorAll('.mobile-drawer-link, .btn-drawer-cta, .btn-drawer-auth').forEach(link => {
+    link.addEventListener('click', () => {
+      closeDrawer();
+    });
+  });
+
+  if (drawerSignoutBtn) {
+    drawerSignoutBtn.addEventListener('click', () => {
+      closeDrawer();
+      signOutUser();
+    });
+  }
 }
 
 /* ==========================================================================
@@ -1110,6 +1178,12 @@ function updateAuthUi() {
   if (tabSavedCount) tabSavedCount.textContent = count;
   updateSavedCountBadge();
 
+  // Mobile Drawer elements
+  const drawerUnauth = document.getElementById('mobile-drawer-unauthenticated');
+  const drawerAuth = document.getElementById('mobile-drawer-authenticated');
+  const drawerUserName = document.getElementById('drawer-user-name');
+  const drawerSavedPill = document.getElementById('drawer-saved-count-pill');
+
   if (currentUser) {
     document.documentElement.classList.add('user-logged-in');
     if (unauthDiv) unauthDiv.style.display = 'none';
@@ -1124,12 +1198,20 @@ function updateAuthUi() {
     if (userName) userName.textContent = displayName;
     if (heroUserAvatar) heroUserAvatar.src = avatarUrl;
     if (heroUserName) heroUserName.textContent = displayName;
+
+    if (drawerUnauth) drawerUnauth.style.display = 'none';
+    if (drawerAuth) drawerAuth.style.display = 'block';
+    if (drawerUserName) drawerUserName.textContent = displayName;
+    if (drawerSavedPill) drawerSavedPill.textContent = `★ ${count} saved`;
   } else {
     document.documentElement.classList.remove('user-logged-in');
     if (unauthDiv) unauthDiv.style.display = 'flex';
     if (authDiv) authDiv.style.display = 'none';
     if (heroUnauth) heroUnauth.style.display = 'block';
     if (heroAuth) heroAuth.style.display = 'none';
+
+    if (drawerUnauth) drawerUnauth.style.display = 'block';
+    if (drawerAuth) drawerAuth.style.display = 'none';
   }
 }
 

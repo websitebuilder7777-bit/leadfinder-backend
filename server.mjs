@@ -1627,6 +1627,12 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
     '/chat.html': 'chat.html',
     '/chat.css': 'chat.css',
     '/chat.js': 'chat.js',
+    '/terms': 'terms.html',
+    '/terms.html': 'terms.html',
+    '/blog': 'blog.html',
+    '/blog.html': 'blog.html',
+    '/how-to-find-leads-google-maps': 'how-to-find-leads-google-maps.html',
+    '/how-to-find-leads-google-maps.html': 'how-to-find-leads-google-maps.html',
     '/favicon.ico': 'favicon.ico',
     '/robots.txt': 'robots.txt'
   };

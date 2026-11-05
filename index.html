@@ -61,6 +61,8 @@
             <li><a href="#case-study" class="nav-link skiper-css-link">Case Study</a></li>
             <li><a href="#methodology" class="nav-link skiper-css-link">Methodology</a></li>
             <li><a href="#pricing" class="nav-link skiper-css-link">Pricing</a></li>
+            <li><a href="blog.html" class="nav-link skiper-css-link">Blog</a></li>
+            <li><a href="terms.html" class="nav-link skiper-css-link">Terms</a></li>
             <li><a href="#faq" class="nav-link skiper-css-link">FAQ</a></li>
           </ul>
         </nav>
@@ -91,8 +93,8 @@
             </button>
           </div>
 
-          <!-- Unauthenticated State -->
-          <div id="auth-unauthenticated" style="display: flex; align-items: center; gap: 12px;">
+          <!-- Unauthenticated State (Desktop) -->
+          <div id="auth-unauthenticated" class="header-desktop-auth" style="display: flex; align-items: center; gap: 12px;">
             <button class="login-link open-auth-modal" id="header-signin-btn" style="display: flex; align-items: center; gap: 6px;">
               <svg width="16" height="16" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
@@ -111,8 +113,8 @@
             </a>
           </div>
 
-          <!-- Authenticated State -->
-          <div id="auth-authenticated" style="display: none; align-items: center; gap: 12px;">
+          <!-- Authenticated State (Desktop) -->
+          <div id="auth-authenticated" class="header-desktop-auth" style="display: none; align-items: center; gap: 12px;">
             <button class="btn-saved-leads-pill" id="header-saved-pill" title="View Saved Prospects">
               <span style="color: #F59E0B;">★</span>
               <span>Saved (<span id="header-saved-count">0</span>)</span>
@@ -131,7 +133,65 @@
               <span>Sign out</span>
             </button>
           </div>
+
+          <!-- Mobile Hamburger Toggle Button -->
+          <button id="btn-mobile-nav" class="mobile-nav-toggle" aria-label="Open Navigation Menu" type="button">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
         </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE NAVIGATION DRAWER -->
+  <div id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true">
+    <div class="mobile-drawer-header">
+      <a href="index.html" class="brand-link">
+        <img src="assets/brandleads-logo-white.png" alt="BrandLeads" class="brand-logo-img brand-logo-dark-theme" height="28" />
+        <img src="assets/brandleads-logo-dark.png" alt="BrandLeads" class="brand-logo-img brand-logo-light-theme" height="28" />
+      </a>
+      <button id="mobile-drawer-close" class="mobile-drawer-close-btn" aria-label="Close Navigation" type="button">✕</button>
+    </div>
+    <div class="mobile-drawer-body">
+      <ul class="mobile-drawer-links">
+        <li><a href="chat.html" class="mobile-drawer-link highlight-ai">⚡ Launch AI Chatbot (100 Free Leads)</a></li>
+        <li><a href="#console" class="mobile-drawer-link">Live Radar Console</a></li>
+        <li><a href="#case-study" class="mobile-drawer-link">Vanguard Case Study</a></li>
+        <li><a href="#methodology" class="mobile-drawer-link">Verification Methodology</a></li>
+        <li><a href="#pricing" class="mobile-drawer-link">Pricing Plans</a></li>
+        <li><a href="blog.html" class="mobile-drawer-link">Blog & Growth Guides</a></li>
+        <li><a href="how-to-find-leads-google-maps.html" class="mobile-drawer-link">How to Find Leads Guide</a></li>
+        <li><a href="terms.html" class="mobile-drawer-link">Terms & Conditions</a></li>
+        <li><a href="#faq" class="mobile-drawer-link">Frequently Asked Questions</a></li>
+      </ul>
+
+      <!-- Mobile Drawer Auth Actions -->
+      <div class="mobile-drawer-auth-box">
+        <div id="mobile-drawer-unauthenticated">
+          <button type="button" class="btn-drawer-auth open-auth-modal" id="drawer-signin-btn">
+            Sign In / Create Account
+          </button>
+          <a href="chat.html" class="btn-drawer-cta">
+            Open Chatbot (100 Free Leads)
+          </a>
+        </div>
+        <div id="mobile-drawer-authenticated" style="display: none;">
+          <div class="mobile-drawer-user-info">
+            <span id="drawer-user-name" style="font-weight: 700;">User</span>
+            <span id="drawer-saved-count-pill" style="font-size: 12px; color: #38BDF8;">★ 0 saved</span>
+          </div>
+          <button type="button" class="btn-drawer-signout" id="drawer-signout-btn">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
       </div>
     </div>
@@ -886,18 +946,19 @@
             <a href="#console">Live Console</a>
             <a href="#methodology">Methodology</a>
             <a href="#pricing">Pricing Plans</a>
+            <a href="chat.html">AI Chatbot Agent</a>
           </div>
           <div class="footer-nav-col">
             <h5>Agency Hub</h5>
+            <a href="blog.html">Blog & Guides</a>
+            <a href="how-to-find-leads-google-maps.html">How to Find Leads Guide</a>
             <a href="#case-study">Vanguard Case Study</a>
-            <a href="#">Outbound Playbook</a>
-            <a href="#">Audit Templates</a>
           </div>
           <div class="footer-nav-col">
             <h5>Legal</h5>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Security</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="terms.html#public-data">Data Privacy</a>
+            <a href="terms.html#anti-spam">Anti-Spam Policy</a>
           </div>
         </div>
       </div>
