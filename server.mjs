@@ -1631,7 +1631,14 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
     '/robots.txt': 'robots.txt'
   };
 
-  const targetFile = ALLOWED_PUBLIC_FILES[pathname] || 'index.html';
+  let targetFile = ALLOWED_PUBLIC_FILES[pathname];
+  if (!targetFile && pathname.startsWith('/assets/')) {
+    const safeRel = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
+    targetFile = safeRel.replace(/^[/\\]+/, '');
+  }
+  if (!targetFile) {
+    targetFile = 'index.html';
+  }
   const filePath = path.join(__dirname, targetFile);
 
   fs.stat(filePath, (err, stats) => {

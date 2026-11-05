@@ -1,41 +1,61 @@
 /* ==========================================================================
-   XYZ LEAD INTELLIGENCE CHATBOT — PURE BLACK DARK THEME
-   Minimalist Enterprise LLM Design System
+   BRANDLEADS AI CHATBOT — LIQUID GLASS & OLED DARK THEME
+   Brand Palette: Deep Navy (#0A192F), Pure Black (#000000), Pure White (#FFFFFF)
+   Aesthetic: Liquid Glass, Dynamic Specular Borders, Glowing Radar Badges
    ========================================================================== */
 
 :root {
+  /* BrandLeads Official Color Tokens */
+  --brand-navy:        #0A192F;
+  --brand-navy-dark:   #050B14;
+  --brand-navy-subtle: #112240;
+  --brand-navy-glow:   rgba(10, 25, 47, 0.75);
+  --brand-black:       #000000;
+  --brand-white:       #FFFFFF;
+  --brand-cyan:        #38BDF8;
+  --brand-blue-accent: #60A5FA;
+  --brand-emerald:     #10B981;
+
   /* True Pure Black & Deep Obsidian Palette */
-  --bg-black:        #000000;
-  --bg-sidebar:      #080808;
-  --bg-card:         #0F0F0F;
-  --bg-card-hover:   #161616;
-  --bg-input:        #121212;
-  --bg-pill:         #181818;
-  --bg-pill-hover:   #222222;
+  --bg-black:          #000000;
+  --bg-sidebar:        rgba(10, 25, 47, 0.45);
+  --bg-card:           rgba(10, 25, 47, 0.65);
+  --bg-card-hover:     rgba(17, 34, 64, 0.85);
+  --bg-input:          rgba(10, 25, 47, 0.7);
+  --bg-pill:           rgba(255, 255, 255, 0.06);
+  --bg-pill-hover:     rgba(255, 255, 255, 0.12);
+
+  /* Liquid Glass Tokens */
+  --glass-bg:          rgba(10, 25, 47, 0.65);
+  --glass-border:      rgba(255, 255, 255, 0.12);
+  --glass-border-hover:rgba(56, 189, 248, 0.4);
+  --glass-blur:        28px;
+  --glass-shadow:      0 16px 48px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-card-bg:     linear-gradient(135deg, rgba(10, 25, 47, 0.75) 0%, rgba(5, 11, 20, 0.88) 100%);
 
   /* Borders */
-  --border-subtle:   #1A1A1A;
-  --border-medium:   #282828;
-  --border-strong:   #383838;
-  --border-active:   #3B82F6;
+  --border-subtle:     rgba(255, 255, 255, 0.08);
+  --border-medium:     rgba(255, 255, 255, 0.14);
+  --border-strong:     rgba(255, 255, 255, 0.22);
+  --border-active:     #38BDF8;
 
   /* Typography Colors */
-  --text-white:      #FFFFFF;
-  --text-primary:    #F3F4F6;
-  --text-secondary:  #9CA3AF;
-  --text-muted:      #6B7280;
+  --text-white:        #FFFFFF;
+  --text-primary:      #FFFFFF;
+  --text-secondary:    #94A3B8;
+  --text-muted:        #64748B;
 
   /* Accent Colors */
-  --accent-blue:     #3B82F6;
-  --accent-blue-glow:rgba(59, 130, 246, 0.25);
-  --accent-emerald:  #10B981;
-  --accent-emerald-bg:rgba(16, 185, 129, 0.12);
-  --accent-amber:    #F59E0B;
-  --accent-amber-bg: rgba(245, 158, 11, 0.12);
-  --accent-red:      #EF4444;
+  --accent-blue:       #38BDF8;
+  --accent-blue-glow:  rgba(56, 189, 248, 0.28);
+  --accent-emerald:    #10B981;
+  --accent-emerald-bg: rgba(16, 185, 129, 0.12);
+  --accent-amber:      #F59E0B;
+  --accent-amber-bg:   rgba(245, 158, 11, 0.12);
+  --accent-red:        #EF4444;
 
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Radii */
@@ -67,59 +87,112 @@ body.chat-body-dark {
   height: 100vh;
   width: 100vw;
   background-color: var(--bg-black);
+  position: relative;
 }
 
 /* --------------------------------------------------------------------------
-   TOP NAVIGATION BAR (MINIMAL LLM STYLE)
+   AMBIENT LIQUID MESH AURORA BACKGROUND FOR CHAT
+   -------------------------------------------------------------------------- */
+.chat-liquid-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+.chat-liquid-orb-1 {
+  position: absolute;
+  top: -15%;
+  left: 10%;
+  width: 60vw;
+  height: 60vw;
+  max-width: 800px;
+  max-height: 800px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10, 25, 47, 0.9) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 70%);
+  filter: blur(90px);
+  animation: chatOrbMove1 16s ease-in-out infinite alternate;
+}
+
+.chat-liquid-orb-2 {
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 55vw;
+  height: 55vw;
+  max-width: 700px;
+  max-height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 38, 74, 0.8) 0%, rgba(10, 25, 47, 0.4) 50%, transparent 70%);
+  filter: blur(100px);
+  animation: chatOrbMove2 20s ease-in-out infinite alternate;
+}
+
+@keyframes chatOrbMove1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, 50px) scale(1.1); }
+}
+
+@keyframes chatOrbMove2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(50px, -30px) scale(0.95); }
+}
+
+/* --------------------------------------------------------------------------
+   TOP NAVIGATION BAR — FROSTED LIQUID GLASS
    -------------------------------------------------------------------------- */
 .dark-top-nav {
-  height: 56px;
-  background-color: var(--bg-black);
+  height: 58px;
+  background-color: rgba(10, 25, 47, 0.7);
+  backdrop-filter: blur(var(--glass-blur)) saturate(190%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(190%);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 20px;
   flex-shrink: 0;
   z-index: 30;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
 }
 
 .nav-left-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .mobile-menu-btn {
   display: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-medium);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
-  padding: 6px 10px;
+  padding: 6px 12px;
   cursor: pointer;
   align-items: center;
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
+  backdrop-filter: blur(10px);
 }
 
 .mobile-menu-btn:hover {
-  background: var(--bg-card);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--border-strong);
 }
 
-.brand-monogram-box {
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, #2563EB, #1D4ED8);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FFFFFF;
-  font-weight: 800;
-  font-size: 15px;
+.brand-monogram-img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.35));
 }
 
 .brand-title-wrap {
@@ -129,32 +202,35 @@ body.chat-body-dark {
 }
 
 .brand-main-text {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-white);
   letter-spacing: -0.02em;
 }
 
 .brand-version-badge {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--text-muted);
-  background: #141414;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.12);
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  letter-spacing: 0.05em;
 }
 
 .active-loc-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #121212;
-  border: 1px solid var(--border-medium);
-  padding: 4px 10px;
+  background: rgba(10, 25, 47, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 11.5px;
-  color: #60A5FA;
+  color: #38BDF8;
   font-weight: 600;
 }
 

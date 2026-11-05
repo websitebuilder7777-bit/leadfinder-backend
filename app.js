@@ -251,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAuthModal();
   initEmailOtpAuth();
   initChatbotGating();
+  initSkiperScroll();
 
   updateAuthUi();
   renderTable();
@@ -1928,3 +1929,75 @@ function initEmailOtpAuth() {
     });
   }
 }
+
+/* ==========================================================================
+   SKIPER UI & LIQUID GLASS SCROLL INTERACTIONS (@skiper-ui)
+   ========================================================================== */
+
+function initSkiperScroll() {
+  // 1. Text Scroll Reveal (@skiper-ui/skiper31)
+  const revealElements = document.querySelectorAll('.skiper-text-reveal');
+  if (revealElements.length > 0 && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    revealElements.forEach(el => observer.observe(el));
+  } else {
+    revealElements.forEach(el => el.classList.add('in-view'));
+  }
+
+  // 2. Interactive 3D Card Tilt (@skiper-ui/skiper32)
+  const tiltCards = document.querySelectorAll('.card-tilt-3d');
+  tiltCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const deltaX = (x - centerX) / centerX;
+      const deltaY = (y - centerY) / centerY;
+
+      const rotateX = -deltaY * 5;
+      const rotateY = deltaX * 5;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    });
+  });
+
+  // 3. Sticky Card Stack Orchestration (@skiper-ui/skiper34)
+  const stackCards = document.querySelectorAll('.sticky-stack-card');
+  if (stackCards.length > 0) {
+    const handleStackScroll = () => {
+      stackCards.forEach((card, idx) => {
+        const nextCard = stackCards[idx + 1];
+        if (nextCard) {
+          const nextRect = nextCard.getBoundingClientRect();
+          const overlap = Math.max(0, 1 - (nextRect.top - 120) / 320);
+          if (overlap > 0) {
+            const scale = Math.max(0.92, 1 - overlap * 0.06);
+            const blur = Math.min(5, overlap * 3);
+            card.style.transform = `scale(${scale})`;
+            card.style.filter = `blur(${blur}px)`;
+          } else {
+            card.style.transform = 'scale(1)';
+            card.style.filter = 'none';
+          }
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleStackScroll, { passive: true });
+    handleStackScroll();
+  }
+}
+
