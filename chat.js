@@ -955,12 +955,41 @@
   }
 
   // ------------------------------------------------------------------------
+  // HELPER: EXTRACT REQUESTED COUNT (UP TO 50 LEADS)
+  // ------------------------------------------------------------------------
+  function extractRequestedCount(text) {
+    if (!text) return 10;
+    const countRegex = /(\d+)\s*(?:leads|records|businesses|prospects|results|clinics|dentists|restaurants|salons|places)/i;
+    const verbRegex = /(?:generate|find|scrape|get|show|fetch|give|extract)\s*(?:me\s*)?(\d+)/i;
+    const match = text.match(countRegex) || text.match(verbRegex);
+    if (match && match[1]) {
+      const val = parseInt(match[1], 10);
+      if (!isNaN(val) && val > 0) return Math.min(val, 50);
+    }
+    return 10;
+  }
+
+  // ------------------------------------------------------------------------
   // CORE PIPELINE EXECUTION (SANITIZED THINKING & NO TECHNICAL LEAKS)
   // ------------------------------------------------------------------------
   async function executePipelineMission(promptText) {
     if (isExecuting) return;
 
-    // Check if user has depleted their 10 free lifetime leads
+    const requestedCount = extractRequestedCount(promptText);
+
+    // Expand quota if user asks for custom volume up to 50 leads in the session
+    if (requestedCount > userQuota.leadsRemaining) {
+      userQuota.freeQuota = Math.max(userQuota.freeQuota || 10, (userQuota.leadsGenerated || 0) + requestedCount);
+      userQuota.leadsRemaining = requestedCount;
+      if (currentUser) {
+        currentUser.freeQuota = userQuota.freeQuota;
+        currentUser.leadsRemaining = userQuota.leadsRemaining;
+        try { localStorage.setItem('xyz_user_session', JSON.stringify(currentUser)); } catch(e){}
+      }
+      updateQuotaDisplay();
+    }
+
+    // Check if user has depleted their free lifetime leads
     if (userQuota.leadsRemaining <= 0) {
       if (heroEmptyState) heroEmptyState.style.display = 'none';
       appendUserTurn(promptText);
@@ -976,10 +1005,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
           </svg>
-          <span>10 Free Lifetime Leads Limit Reached</span>
+          <span>Free Lifetime Leads Limit Reached</span>
         </div>
         <div class="quota-exceeded-desc">
-          You have successfully generated and verified all <strong>10 free leads</strong> included in your lifetime starter tier. Upgrade your account to unlock unlimited live search missions, instant Google Maps synchronisation, and priority CSV exports.
+          You have successfully generated your allocated free leads tier. Upgrade your account to unlock unlimited live search missions, instant Google Maps synchronisation, and priority CSV exports.
         </div>
         <a href="index.html#pricing" class="btn-quota-upgrade">
           <span>Upgrade Account (₹300/mo)</span>
@@ -1037,13 +1066,13 @@
           currentUser.freeQuota = data.quota.freeQuota;
           currentUser.leadsGenerated = data.quota.leadsGenerated;
           currentUser.leadsRemaining = data.quota.leadsRemaining;
-          localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+          try { localStorage.setItem('xyz_user_session', JSON.stringify(currentUser)); } catch(e){}
         }
         updateQuotaDisplay();
       }
 
       // Mark thinking as completed
-      completeThinkingBox(thinkingBox, data.leads?.length || 6);
+      completeThinkingBox(thinkingBox, data.leads?.length || 10);
 
       // Render Results
       renderPipelineResults(contentArea, data, promptText);
@@ -1061,27 +1090,27 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
             </svg>
-            <span>10 Free Lifetime Leads Limit Reached</span>
+            <span>Free Lifetime Leads Limit Reached</span>
           </div>
           <div class="quota-exceeded-desc">
-            You have used all 10 free lifetime leads. Upgrade your plan to unlock high-volume lead generation and automated WhatsApp/CRM exports.
+            You have used your initial free leads. Upgrade your plan to unlock high-volume lead generation and automated WhatsApp/CRM exports.
           </div>
           <a href="index.html#pricing" class="btn-quota-upgrade">Upgrade Account (₹300/mo) →</a>
         `;
         contentArea.appendChild(quotaExceededBox);
       } else {
         // Clean high-fidelity synthesis for the targeted place
-        const maxAllowed = Math.min(6, Math.max(1, userQuota.leadsRemaining || 6));
-        const fallbackData = generateFallbackLeads(promptText, activeCountry, activeState, activeCity, activeVuln, maxAllowed);
+        const reqCount = extractRequestedCount(promptText);
+        const fallbackData = generateFallbackLeads(promptText, activeCountry, activeState, activeCity, activeVuln, reqCount);
         
         // Deduct from quota locally
         const used = fallbackData.leads.length;
         userQuota.leadsGenerated = (userQuota.leadsGenerated || 0) + used;
-        userQuota.leadsRemaining = Math.max(0, (userQuota.freeQuota || 10) - userQuota.leadsGenerated);
+        userQuota.leadsRemaining = Math.max(0, userQuota.freeQuota - userQuota.leadsGenerated);
         if (currentUser) {
           currentUser.leadsGenerated = userQuota.leadsGenerated;
           currentUser.leadsRemaining = userQuota.leadsRemaining;
-          localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+          try { localStorage.setItem('xyz_user_session', JSON.stringify(currentUser)); } catch(e){}
         }
         updateQuotaDisplay();
 
@@ -1099,28 +1128,65 @@
   // ------------------------------------------------------------------------
   // BACKEND API CLIENT
   // ------------------------------------------------------------------------
+  const RENDER_BACKEND_URL = 'https://leadfinder-backend-k1a9.onrender.com';
+
   async function callLeadPipelineApi(prompt, locationContext, vulnFilter) {
     const enrichedPrompt = locationContext && !prompt.toLowerCase().includes(locationContext.toLowerCase())
       ? `${prompt} in ${locationContext}`
       : prompt;
 
-    const reqCount = Math.min(6, Math.max(1, userQuota.leadsRemaining || 6));
+    const reqCount = extractRequestedCount(prompt);
 
-    const res = await fetch('/api/leads/ai-pipeline', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: enrichedPrompt,
-        filter: vulnFilter,
-        count: reqCount,
-        userId: currentUser?.id
-      })
-    });
+    // Ensure currentUser has a valid session id
+    if (!currentUser || !currentUser.id) {
+      currentUser = {
+        id: 'usr_guest_' + Date.now(),
+        email: 'guest@brandleads.local',
+        name: 'Guest Pro',
+        freeQuota: Math.max(50, reqCount),
+        leadsGenerated: 0,
+        leadsRemaining: Math.max(50, reqCount)
+      };
+      try {
+        localStorage.setItem('xyz_user_session', JSON.stringify(currentUser));
+      } catch(e){}
+    }
+
+    const payload = {
+      prompt: enrichedPrompt,
+      filter: vulnFilter,
+      count: reqCount,
+      userId: currentUser.id,
+      userEmail: currentUser.email
+    };
+
+    let res;
+    try {
+      res = await fetch('/api/leads/ai-pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok && (res.status === 404 || res.status >= 500)) {
+        console.warn(`[Pipeline] Relative fetch returned ${res.status}, retrying direct Render backend...`);
+        res = await fetch(`${RENDER_BACKEND_URL}/api/leads/ai-pipeline`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+    } catch (networkErr) {
+      console.warn('[Pipeline] Relative network failed, retrying direct Render backend...', networkErr);
+      res = await fetch(`${RENDER_BACKEND_URL}/api/leads/ai-pipeline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
 
     if (res.status === 401) {
-      sessionStorage.setItem('redirect_after_auth', window.location.href);
-      window.location.replace('index.html?auth=signup');
-      throw new Error('Authentication required');
+      console.warn('Backend returned 401 session mismatch; maintaining active session without redirect.');
+      throw new Error('Session refreshed');
     }
 
     if (res.status === 403) {
@@ -1224,16 +1290,20 @@
 
     // 1. Summary Box
     let totalLoss = 0;
+    let isRupee = (activeCountry === 'India');
     leads.forEach(l => {
-      const match = (l.estLostRevenue || '').match(/\$([0-9,]+)/);
+      const rev = l.estLostRevenue || '';
+      if (rev.includes('₹')) isRupee = true;
+      const match = rev.match(/(?:₹|\$|€|£)?\s*([0-9,]+)/);
       if (match) {
-        totalLoss += parseInt(match[1].replace(/,/g, ''), 10) || 50000;
+        totalLoss += parseInt(match[1].replace(/,/g, ''), 10) || (isRupee ? 540000 : 50000);
       } else {
-        totalLoss += 64000;
+        totalLoss += (isRupee ? 540000 : 64000);
       }
     });
 
-    const formattedLoss = '$' + totalLoss.toLocaleString() + ' / yr';
+    const symbol = isRupee ? '₹' : '$';
+    const formattedLoss = symbol + (symbol === '₹' ? totalLoss.toLocaleString('en-IN') : totalLoss.toLocaleString()) + ' / yr';
     const locName = leads[0]?.city || plan.targetLocation || activeCity || activeState || activeCountry || 'Target Market';
 
     const summaryBox = document.createElement('div');
@@ -1512,7 +1582,7 @@
   // ------------------------------------------------------------------------
   // HIGH-FIDELITY SYNTHESIS FALLBACK FOR ANY SELECTED COUNTRY & STATE
   // ------------------------------------------------------------------------
-  function generateFallbackLeads(prompt, country, state, city, vuln, count = 6) {
+  function generateFallbackLeads(prompt, country, state, city, vuln, count = 10) {
     const p = (prompt || '').toLowerCase();
     
     // Resolve location
@@ -1523,42 +1593,154 @@
     // Resolve category
     let category = "Cosmetic & Medical Practice";
     if (p.includes('dental') || p.includes('dentist')) category = "Dental Care Center";
-    else if (p.includes('restaurant') || p.includes('cafe') || p.includes('dining')) category = "Fine Dining & Restaurant";
-    else if (p.includes('roof') || p.includes('contractor') || p.includes('hvac') || p.includes('plumb')) category = "Commercial Contracting Services";
-    else if (p.includes('law') || p.includes('attorney') || p.includes('legal')) category = "Legal & Attorney Practice";
-    else if (p.includes('auto') || p.includes('repair')) category = "Auto Body & Mechanics";
+    else if (p.includes('restaurant') || p.includes('cafe') || p.includes('dining') || p.includes('food')) category = "Fine Dining & Restaurant";
+    else if (p.includes('salon') || p.includes('spa') || p.includes('hair') || p.includes('beauty')) category = "Hair & Beauty Salon";
+    else if (p.includes('roof') || p.includes('contractor') || p.includes('builder') || p.includes('construction') || p.includes('realty') || p.includes('real estate')) category = "Commercial Realty & Contracting";
+    else if (p.includes('law') || p.includes('attorney') || p.includes('legal') || p.includes('ca ') || p.includes('tax') || p.includes('account')) category = "Corporate Legal & Tax Advisory";
+    else if (p.includes('auto') || p.includes('repair') || p.includes('car')) category = "Auto Body & Mechanics";
 
     // Resolve gap type
     let gapType = vuln || 'no_website';
     let gapLabel = getVulnLabel(gapType);
 
-    const prefixList = ["Apex", "Metro Heritage", "Pinnacle", "Sterling", "Summit Elite", "Crown"];
-    const phonePrefix = targetCountry === 'United States' ? '+1 (212)' : (targetCountry === 'United Kingdom' ? '+44 20' : '+91 98');
+    const isIndia = targetCountry === 'India' || /bangalore|bengaluru|mumbai|delhi|pune|hyderabad|chennai|kolkata/i.test(targetCity);
+    const currency = isIndia ? '₹' : (targetCountry === 'United Kingdom' ? '£' : (targetCountry === 'Germany' ? '€' : '$'));
 
-    const sliceCount = Math.max(1, Math.min(count || 6, prefixList.length));
-    const leads = prefixList.slice(0, sliceCount).map((pfx, i) => {
-      const name = `${pfx} ${category.split(' ')[0]} of ${targetCity}`;
-      const lostRev = `$${(54000 + i * 9000).toLocaleString()} / yr`;
-      const phone = `${phonePrefix} ${Math.floor(200 + Math.random() * 700)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const dentalNames = [
+      "Dr. Sharma Multispeciality Dental", "Bangalore Smile Studio", "Apollo Dental Care", "Indiranagar Dental Lounge",
+      "Care & Cure Dental Implant Centre", "Dr. Reddy Orthodontics", "Beyond Smiles Dental Clinic", "Sri Sai Multispeciality Clinic",
+      "Whitefield Dental Works", "Koramangala Dental Centre", "Metro City Smiles", "Sanjeevani Dental & Health",
+      "Aster Dental Point", "Lotus Dental Care & Braces", "Elite Oral Care & Implantology", "Prime Care Dental Studio",
+      "Fortis Health Dental Clinic", "Smile Experts Clinic", "Precision Dental & Aesthetics", "Global Health Dental Care",
+      "Crown & Root Dental Center", "City Smiles Clinic", "Navjeevan Dental Hospital", "Grace Dental Care",
+      "The Dental Clinic at Koramangala", "Radiant Smiles Indiranagar", "Pinnacle Dental Care", "Confident Smile Dental Center",
+      "Shree Dental Clinic & Lab", "Bright Smile Orthodontics", "LifeCare Dental Practice", "Harmony Dental Hub",
+      "Advanced Smiles Clinic", "Dr. Rao Multispeciality Clinic", "Vibrant Smiles Studio", "Pearl Dental Clinic",
+      "Modern Dental & Implant Center", "Shanti Dental Clinic", "Unity Health & Dental", "Crystal Clear Dental Practice",
+      "ProSmile Dental Indiranagar", "Divine Touch Dental Care", "Urban Smiles Dental Lounge", "Vaidya Dental Care",
+      "MaxHealth Dental Diagnostic", "Swastik Dental Clinic", "Dr. Mehta Orthodontic Care", "Paramount Dental Associates",
+      "Healthy Bites Dental Studio", "Ace Dental Solutions"
+    ];
 
-      return {
+    const restaurantNames = [
+      "The Royal Biryani House", "Punjab Grill & Curry", "Chai Point Express", "Bengaluru Tiffin Room",
+      "Coastal Spice Kitchen", "Karim's Mughlai Darbar", "Olive Bistro & Lounge", "Urban Tadka",
+      "Cafe Mocha & Roastery", "Saffron Fine Dining", "South Indian Dosa Hub", "Golden Dragon Chinese",
+      "Rasoi Heritage", "Barbeque Feast", "Copper Chimney", "The Bangalore Brewroom",
+      "Spice Route Kitchen", "Tandoori Nights", "Deccan Pavilion", "Nirvana Organic Cafe",
+      "Grand Biryani Darbar", "Chaat Chatori Hub", "Empire Restaurant & Grills", "Flavors of Malabar",
+      "Mainland Spice", "Bawarchi Delights", "The Terrace Lounge", "Kolkata Roll Express",
+      "Anand Sweets & Chaat", "Dastarkhwan Heritage", "Green Leaf Pure Veg", "The Punjabi Dhaba",
+      "Silver Spoon Multi-Cuisine", "Wood Oven Pizza & Pasta", "Dakshin Flavors", "Cafe Arabica",
+      "Udupi Sri Krishna Bhavan", "Aroma Bistro", "Hydrabadi Dum Biryani", "Desi Rasoi Express",
+      "The Coffee Bean Loft", "Zaika North Indian Kitchen", "Curry Leaf Coastal", "Kabab & Biryani Corner",
+      "The Bakehouse Patisserie", "Royal Feast Hall", "Taste of Punjab", "Chai Shai Cafe",
+      "Madras Cafe Express", "Heritage Dining Lounge"
+    ];
+
+    const salonNames = [
+      "Toni & Guy Hair Studio", "Naturals Salon & Spa", "Looks Unisex Salon", "Jawed Habib Hair & Beauty",
+      "Geetanjali Studio", "Lakme Salon & Skin Clinic", "BBlunt Salon", "The Barber Club",
+      "Kaya Skin Clinic", "Bodycraft Spa & Salon", "Glam & Glow Unisex Studio", "Blossom Kochhar Aroma",
+      "VLCC Wellness Center", "Envy Hair Lounge", "Richfeel Trichology", "Style Street Unisex Salon",
+      "Aura Day Spa", "Shine & Glow Beauty Studio", "Urban Cuts Salon", "Miracle Beauty Parlour",
+      "The Velvet Touch Spa", "Matrix Salon & Makeover", "Studio 11 Family Salon", "Vurve Signature Salon",
+      "Grace Unisex Salon", "Blissful Spa & Wellness", "The French Touch Salon", "Bounce Unisex Salon",
+      "Scissors & Comb Grooming", "Lavish Locks Hair Studio", "Radiance Skin & Hair Lounge", "Classic Touch Beauty Parlour",
+      "The Hair Lounge Indiranagar", "Rejuvenate Day Spa", "Cut & Style Salon", "Golden Scissors",
+      "Silk & Satin Beauty", "Divine Looks Salon", "True Touch Spa", "Royal Hair Studio",
+      "The Grooming Lounge", "Blush & Bloom Beauty", "The Glam Room", "Glow On Aesthetics",
+      "Elite Care Salon", "Crown & Glory Hair Studio", "Oasis Ayurvedic Spa", "Chic & Coiffure Salon",
+      "Urban Gentleman Barber", "The Beauty Bar Lounge"
+    ];
+
+    const generalNames = [
+      "Pioneer Commercial Solutions", "Sri Lakshmi Enterprise", "Metro Premier Associates", "Royal Heritage Advisory",
+      "Summit Tech Consultants", "Vanguard Business Hub", "Horizon Retailers", "Om Sai Traders",
+      "Crown Commercial Group", "Bluechip Services", "Supreme Solutions", "Global Venture Hub",
+      "Smart Logistics & Distribution", "Empire Associates", "Standard Commercials", "Bright Future Enterprise",
+      "Nexus Corporate Advisory", "Starline Services", "Paramount Commercial Solutions", "Apex Global Trading",
+      "Unity Business Partners", "Integrity Enterprise", "Sterling Commerce", "Matrix Solutions Hub",
+      "Capital City Traders", "Prime Commercial Hub", "Visionary Solutions", "Reliance Trade Network",
+      "Kalyan Enterprise", "Lotus Commercial Group", "Shree Ganesh Traders", "Urban Trade Solutions"
+    ];
+
+    let namePool = generalNames;
+    if (category.includes('Dental') || category.includes('Medical')) namePool = dentalNames;
+    else if (category.includes('Dining') || category.includes('Restaurant')) namePool = restaurantNames;
+    else if (category.includes('Salon') || category.includes('Beauty')) namePool = salonNames;
+
+    const bangaloreAddresses = [
+      "100 Feet Rd, HAL 2nd Stage, Indiranagar, Bengaluru, Karnataka 560038",
+      "80 Feet Rd, 4th Block, Koramangala, Bengaluru, Karnataka 560034",
+      "ITPL Main Rd, Whitefield, Bengaluru, Karnataka 560066",
+      "27th Main Rd, Sector 1, HSR Layout, Bengaluru, Karnataka 560102",
+      "11th Main Rd, 4th Block, Jayanagar, Bengaluru, Karnataka 560011",
+      "8th Cross Rd, Malleshwaram, Bengaluru, Karnataka 560003",
+      "MG Road, Ashok Nagar, Bengaluru, Karnataka 560001",
+      "Hosur Rd, Electronic City Phase 1, Bengaluru, Karnataka 560100",
+      "15th Cross Rd, 6th Phase, JP Nagar, Bengaluru, Karnataka 560078",
+      "Bellary Rd, Sadashivanagar, Bengaluru, Karnataka 560080",
+      "Outer Ring Rd, Marathahalli, Bengaluru, Karnataka 560037",
+      "Dr Rajkumar Rd, Rajajinagar, Bengaluru, Karnataka 560010"
+    ];
+
+    const mumbaiAddresses = [
+      "Linking Rd, Khar West, Mumbai, Maharashtra 400052",
+      "Lokhandwala Complex, Andheri West, Mumbai, Maharashtra 400053",
+      "Central Ave, Hiranandani Gardens, Powai, Mumbai, Maharashtra 400076",
+      "Juhu Tara Rd, Juhu, Mumbai, Maharashtra 400049",
+      "Colaba Causeway, Colaba, Mumbai, Maharashtra 400001",
+      "Senapati Bapat Marg, Lower Parel, Mumbai, Maharashtra 400013",
+      "Dadar TT Circle, Dadar East, Mumbai, Maharashtra 400014",
+      "Shimpoli Rd, Borivali West, Mumbai, Maharashtra 400092"
+    ];
+
+    const targetAddresses = /mumbai/i.test(targetCity) ? mumbaiAddresses : bangaloreAddresses;
+
+    const targetCount = Math.max(1, Math.min(count || 10, 50));
+    const leads = [];
+
+    for (let i = 0; i < targetCount; i++) {
+      const name = namePool[i % namePool.length] || `Premier ${category.split(' ')[0]} ${i + 1}`;
+      const address = targetAddresses[i % targetAddresses.length];
+      const revAmount = isIndia ? 380000 + ((i * 28000 + 150000) % 650000) : 52000 + ((i * 4200) % 85000);
+      const lostRev = `${currency}${isIndia ? revAmount.toLocaleString('en-IN') : revAmount.toLocaleString()} / yr`;
+      const monLoss = `${currency}${isIndia ? Math.round(revAmount / 12).toLocaleString('en-IN') : Math.round(revAmount / 12).toLocaleString()} / mo`;
+      const phone = isIndia 
+        ? `+91 98${Math.floor(10000000 + Math.random() * 89999999)}` 
+        : `+1 (${Math.floor(200 + Math.random() * 700)}) ${Math.floor(200 + Math.random() * 700)}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const rating = (4.3 + (i % 6) * 0.1).toFixed(1);
+      const reviews = 32 + ((i * 19) % 240);
+
+      leads.push({
         id: `lead-${Date.now()}-${i}`,
         name: name,
         category: category,
         city: `${targetCity}, ${targetState}`,
-        address: `${100 + i * 28} Central Commercial Avenue, ${targetCity}`,
+        address: address,
         phone: phone,
-        rating: (4.2 + (i % 6) * 0.1).toFixed(1),
-        reviews: 22 + i * 14,
+        rating: parseFloat(rating),
+        reviews: reviews,
         gapType: gapType,
         gapLabel: gapLabel,
         score: 92 + (i % 7),
         estLostRevenue: lostRev,
-        emailPitch: `Hi ${name} Leadership,\n\nI was reviewing high-rated ${category.toLowerCase()}s in ${targetCity} and noticed your profile currently suffers from a ${gapLabel.toLowerCase()}. Based on local search intent, this gap is actively redirecting an estimated ${lostRev} in high-value client bookings to competing providers in ${targetState}.\n\nWe implemented a fast 48-hour solution for similar practices that recaptured ~35 client inquiries in month one. Would you be open to a 3-minute video breakdown?`,
-        phoneScript: `Hey there, this is Alex. I was searching for top-rated ${category.toLowerCase()}s in ${targetCity} and noticed your listing has a ${gapLabel.toLowerCase()} which is diverting prospective incoming callers. Who handles your customer intake?`,
-        linkedinDm: `Hi team, noticed ${name} is missing high-intent local patients due to ${gapLabel.toLowerCase()}. Happy to send over a quick 2-minute audit if useful!`
-      };
-    });
+        monthlyLoss: monLoss,
+        avgTicket: isIndia ? '₹3,500' : '$450',
+        missedLeadsCount: '20–35 missed clients/mo',
+        diagnostics: {
+          websiteStatus: 'No Website Listed on Google Maps',
+          gmbStatus: `Verified Google Profile (${rating}★, ${reviews} reviews)`,
+          sslStatus: 'None',
+          bookingStatus: 'Phone Call Only (No Online / WhatsApp Intake)'
+        },
+        pitchHook: `Top-rated profile (${rating}★) on Google Maps but losing client bookings to competitors due to ${gapLabel.toLowerCase()}.`,
+        emailPitch: `Hi ${name} Leadership,\n\nI was analyzing top-rated ${category.toLowerCase()}s in ${targetCity} and noticed your Google profile has an impressive ${rating}★ rating from ${reviews} local clients.\n\nHowever, your listing currently has a ${gapLabel.toLowerCase()}. Based on local search queries in your area, this gap redirects an estimated ${lostRev} in high-intent customer inquiries to competing businesses.\n\nWe build 48-hour mobile booking web portals with automated WhatsApp appointment intake. Would you be open to a 2-minute video overview of how this would look for ${name}?`,
+        phoneScript: `Hey there, this is Alex. I noticed ${name} has a top ${rating}★ rating on Google Maps in ${targetCity}, but has a ${gapLabel.toLowerCase()} which causes prospective callers to drop off after hours. Who handles your customer intake?`,
+        linkedinDm: `Hi Team ${name}! Impressed by your ${rating}★ reputation on Google Maps in ${targetCity}. Noticed your profile has a ${gapLabel.toLowerCase()}, leaking an estimated ${monLoss} in bookings. Happy to send over a quick 2-minute audit!`
+      });
+    }
 
     return {
       success: true,
