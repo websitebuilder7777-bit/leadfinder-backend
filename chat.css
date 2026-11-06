@@ -283,18 +283,145 @@ body.chat-body-dark {
 }
 
 /* --------------------------------------------------------------------------
-   LEFT SIDEBAR (INDEPENDENTLY SCROLLABLE)
+   LEFT SIDEBAR (INDEPENDENTLY SCROLLABLE & CUSTOMIZABLE)
    -------------------------------------------------------------------------- */
 .dark-sidebar {
-  width: 320px;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-subtle);
+  width: 420px;
+  background: #09090B;
+  border-right: 1px solid #27272A;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
   z-index: 25;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top left;
+}
+
+/* Screen Coverage Modes */
+.dark-sidebar.width-narrow {
+  width: 300px !important;
+}
+.dark-sidebar.width-normal {
+  width: 420px !important;
+}
+.dark-sidebar.width-wide {
+  width: 580px !important;
+}
+.dark-sidebar.width-max {
+  width: 80vw !important;
+  max-width: 980px !important;
+}
+
+/* Tilt Modes */
+.dark-sidebar.tilt-left {
+  transform: rotate(-2deg) scale(0.99) !important;
+}
+.dark-sidebar.tilt-flat {
+  transform: none !important;
+}
+.dark-sidebar.tilt-right {
+  transform: rotate(2deg) scale(0.99) !important;
+}
+
+/* Filter Customizer Card - Strictly Black & White */
+.filter-customizer-card {
+  background: #121214;
+  border: 1px solid #27272A;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.customizer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.customizer-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #FFFFFF;
+}
+
+.customizer-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: #27272A;
+  color: #A1A1AA;
+  border-radius: 4px;
+}
+
+.customizer-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.customizer-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #A1A1AA;
+}
+
+.customizer-btn-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.coverage-pill-btn,
+.tilt-pill-btn {
+  flex: 1;
+  min-width: 55px;
+  padding: 6px 8px;
+  background: #18181B;
+  border: 1px solid #27272A;
+  border-radius: 6px;
+  color: #D4D4D8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.coverage-pill-btn:hover,
+.tilt-pill-btn:hover {
+  background: #27272A;
+  color: #FFFFFF;
+  border-color: #3F3F46;
+}
+
+.coverage-pill-btn.active,
+.tilt-pill-btn.active {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #FFFFFF !important;
+  font-weight: 800;
+}
+
+.chat-loc-change-btn {
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  border-radius: 4px;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-loc-change-btn:hover {
+  background: #FFFFFF;
+  color: #000000;
 }
 
 .sidebar-scrollable-content {
@@ -371,8 +498,8 @@ body.chat-body-dark {
 .vuln-card-btn {
   width: 100%;
   text-align: left;
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-subtle);
+  background: #121214;
+  border: 1.5px solid #27272A;
   border-radius: var(--radius-md);
   padding: 12px 14px;
   cursor: pointer;
@@ -384,15 +511,25 @@ body.chat-body-dark {
 }
 
 .vuln-card-btn:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-medium);
+  background: #1C1C1F;
+  border-color: #3F3F46;
   transform: translateX(2px);
 }
 
+/* Pure Black and White Active State - No Blue! */
 .vuln-card-btn.active {
-  background: #111A2E;
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 16px var(--accent-blue-glow);
+  background: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15) !important;
+}
+
+.vuln-card-btn.active .vuln-card-title,
+.vuln-card-btn.active .vuln-card-title span {
+  color: #000000 !important;
+}
+
+.vuln-card-btn.active .vuln-card-sub {
+  color: #52525B !important;
 }
 
 .vuln-card-left {
@@ -417,38 +554,47 @@ body.chat-body-dark {
 }
 
 .vuln-card-badge {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
   border-radius: 4px;
-  border: 1px solid transparent;
+  background: #27272A;
+  color: #FFFFFF;
+  border: 1px solid #3F3F46;
   flex-shrink: 0;
+  letter-spacing: 0.04em;
 }
 
-.vuln-badge-red {
-  background: rgba(239, 68, 68, 0.15);
-  color: #F87171;
-  border-color: rgba(239, 68, 68, 0.3);
+.vuln-card-btn.active .vuln-card-badge,
+.vuln-card-btn.active .vuln-badge-mono,
+.vuln-card-btn.active .vuln-badge-red,
+.vuln-card-btn.active .vuln-badge-amber,
+.vuln-card-btn.active .vuln-badge-blue {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #000000 !important;
 }
 
-.vuln-badge-amber {
-  background: rgba(245, 158, 11, 0.15);
-  color: #FBBF24;
-  border-color: rgba(245, 158, 11, 0.3);
+.vuln-badge-mono {
+  background: #27272A;
+  color: #FFFFFF;
+  border: 1px solid #3F3F46;
 }
 
+.vuln-badge-red,
+.vuln-badge-amber,
 .vuln-badge-blue {
-  background: rgba(59, 130, 246, 0.15);
-  color: #93C5FD;
-  border-color: rgba(59, 130, 246, 0.3);
+  background: #27272A;
+  color: #FFFFFF;
+  border-color: #3F3F46;
 }
 
 /* --------------------------------------------------------------------------
    CASCADING GEOGRAPHIC LOCATION PICKER (SMALL BUTTON + MODAL / DRAWER)
    -------------------------------------------------------------------------- */
 .location-selector-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: #121214;
+  border: 1px solid #27272A;
   border-radius: var(--radius-md);
   padding: 12px 14px;
   display: flex;
@@ -481,9 +627,9 @@ body.chat-body-dark {
 .btn-open-places {
   width: 100%;
   padding: 7px 12px;
-  background: #181818;
-  color: #60A5FA;
-  border: 1px solid var(--border-medium);
+  background: #18181B;
+  color: #FFFFFF;
+  border: 1px solid #27272A;
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 700;
@@ -496,16 +642,16 @@ body.chat-body-dark {
 }
 
 .btn-open-places:hover {
-  background: #242424;
-  border-color: var(--accent-blue);
-  color: var(--text-white);
+  background: #27272A;
+  border-color: #52525B;
+  color: #FFFFFF;
 }
 
 /* Inline / Popout Cascading Places Dropdown Drawer */
 .cascading-places-modal {
   display: none;
-  background: #0D0D0D;
-  border: 1px solid var(--border-strong);
+  background: #09090B;
+  border: 1px solid #27272A;
   border-radius: var(--radius-md);
   padding: 12px;
   margin-top: 6px;
@@ -542,8 +688,8 @@ body.chat-body-dark {
 }
 
 .places-step-tab.active {
-  color: var(--text-white);
-  background: #1E1E1E;
+  color: #000000;
+  background: #FFFFFF;
 }
 
 .places-list-container {
@@ -559,8 +705,8 @@ body.chat-body-dark {
   align-items: center;
   justify-content: space-between;
   padding: 6px 8px;
-  background: #141414;
-  border: 1px solid var(--border-subtle);
+  background: #141416;
+  border: 1px solid #27272A;
   border-radius: var(--radius-sm);
   font-size: 12px;
   color: var(--text-primary);
@@ -569,15 +715,15 @@ body.chat-body-dark {
 }
 
 .places-item-row:hover {
-  background: #222222;
-  border-color: var(--accent-blue);
-  color: var(--text-white);
+  background: #27272A;
+  border-color: #52525B;
+  color: #FFFFFF;
 }
 
 .places-item-row.selected {
-  background: #1E293B;
-  border-color: var(--accent-blue);
-  color: #60A5FA;
+  background: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+  color: #000000 !important;
   font-weight: 700;
 }
 
@@ -614,7 +760,7 @@ body.chat-body-dark {
 }
 
 .modifier-plus-icon {
-  color: var(--accent-blue);
+  color: #FFFFFF !important;
   font-size: 14px;
   font-weight: 900;
 }

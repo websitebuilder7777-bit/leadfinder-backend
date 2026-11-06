@@ -51,17 +51,18 @@
         </div>
       </a>
 
-      <div class="active-loc-pill" id="nav-active-loc-pill" title="Currently targeted market">
+      <div class="active-loc-pill" id="nav-active-loc-pill" title="Currently targeted market. Click to re-detect local area.">
         <span class="active-loc-dot"></span>
-        <span id="nav-target-label">📍 Bangalore, Karnataka (India)</span>
+        <span id="nav-target-label">📍 Detecting Local Area...</span>
+        <button type="button" id="btn-chat-detect-loc" class="chat-loc-change-btn" title="Re-detect local area via GPS">Auto GPS</button>
       </div>
 
-      <!-- Small Live Leads Quota Badge -->
-      <div class="quota-badge-pill" id="quota-badge-pill" title="Free Lifetime Leads Quota (100 Included)">
+      <!-- Small Live Leads Quota Badge (10 Leads Free Lifetime) -->
+      <div class="quota-badge-pill" id="quota-badge-pill" title="Free Lifetime Leads Quota (10 Included)">
         <span class="quota-icon">⚡</span>
         <div class="quota-text-wrap">
           <span class="quota-label">Quota:</span>
-          <span class="quota-val"><strong id="quota-remaining-count">100</strong> / 100 Left</span>
+          <span class="quota-val"><strong id="quota-remaining-count">10</strong> / 10 Left</span>
         </div>
         <div class="quota-bar-track">
           <div class="quota-bar-fill" id="quota-bar-fill" style="width: 100%;"></div>
@@ -96,6 +97,33 @@
     <aside class="dark-sidebar" id="dark-sidebar">
       <div class="sidebar-scrollable-content">
 
+        <!-- FILTER MENU CUSTOMIZER (Tilt + Screen Coverage) - Pure Black & White -->
+        <div class="filter-customizer-card">
+          <div class="customizer-header">
+            <span class="customizer-title">Filter Workspace</span>
+            <span class="customizer-tag">B&amp;W Controls</span>
+          </div>
+
+          <div class="customizer-control-group">
+            <span class="customizer-field-label">Screen Coverage:</span>
+            <div class="customizer-btn-row" id="coverage-btn-row">
+              <button type="button" class="coverage-pill-btn" data-width="narrow" title="Compact Width (300px)">300px</button>
+              <button type="button" class="coverage-pill-btn active" data-width="normal" title="Standard Width (420px)">420px</button>
+              <button type="button" class="coverage-pill-btn" data-width="wide" title="Wide View (580px)">580px</button>
+              <button type="button" class="coverage-pill-btn" data-width="max" title="Max Coverage (80vw)">Max</button>
+            </div>
+          </div>
+
+          <div class="customizer-control-group">
+            <span class="customizer-field-label">Tilt Customization:</span>
+            <div class="customizer-btn-row" id="tilt-btn-row">
+              <button type="button" class="tilt-pill-btn" data-tilt="left" title="Tilt Left by -2 degrees">↶ Tilt Left</button>
+              <button type="button" class="tilt-pill-btn active" data-tilt="flat" title="Straight 0 degrees">Straight</button>
+              <button type="button" class="tilt-pill-btn" data-tilt="right" title="Tilt Right by +2 degrees">Tilt Right ↷</button>
+            </div>
+          </div>
+        </div>
+
         <!-- New Chat Trigger -->
         <div>
           <button id="btn-sidebar-new-chat" class="btn-dark-new-chat">
@@ -118,11 +146,11 @@
           </div>
         </div>
 
-        <!-- 1. VULNERABILITY FOCUS (BIG FONTS) -->
+        <!-- 1. VULNERABILITY FOCUS (PURE BLACK & WHITE MONOCHROME) -->
         <div>
           <div class="dark-section-label">
             <span>Vulnerability Focus</span>
-            <span style="color: var(--accent-blue); font-size: 10px;">ONE-CLICK</span>
+            <span style="color: #71717A; font-size: 10px; font-weight: 700;">FILTER</span>
           </div>
           <div class="vuln-cards-stack">
             
@@ -133,7 +161,7 @@
                 </div>
                 <div class="vuln-card-sub">Losing high-intent organic traffic</div>
               </div>
-              <span class="vuln-card-badge vuln-badge-red">CRITICAL</span>
+              <span class="vuln-card-badge vuln-badge-mono">CRITICAL</span>
             </button>
 
             <button class="vuln-card-btn" data-vuln="unclaimed">
@@ -143,7 +171,7 @@
                 </div>
                 <div class="vuln-card-sub">Hijackable listing on local maps</div>
               </div>
-              <span class="vuln-card-badge vuln-badge-amber">LEAKAGE</span>
+              <span class="vuln-card-badge vuln-badge-mono">LEAKAGE</span>
             </button>
 
             <button class="vuln-card-btn" data-vuln="insecure_ssl">
@@ -153,7 +181,7 @@
                 </div>
                 <div class="vuln-card-sub">Browser security warning penalty</div>
               </div>
-              <span class="vuln-card-badge vuln-badge-blue">SECURITY</span>
+              <span class="vuln-card-badge vuln-badge-mono">SECURITY</span>
             </button>
 
             <button class="vuln-card-btn" data-vuln="dead_link">
@@ -161,9 +189,9 @@
                 <div class="vuln-card-title">
                   <span>⚠️ Dead / 404 Links</span>
                 </div>
-                <div class="vuln-card-sub">Expired domains & broken routing</div>
+                <div class="vuln-card-sub">Expired domains &amp; broken routing</div>
               </div>
-              <span class="vuln-card-badge vuln-badge-red">404 ERROR</span>
+              <span class="vuln-card-badge vuln-badge-mono">404 ERROR</span>
             </button>
 
           </div>
@@ -173,7 +201,7 @@
         <div>
           <div class="dark-section-label">
             <span>Target Location</span>
-            <span style="color: #10B981; font-size: 10px;">GLOBAL</span>
+            <span style="color: #71717A; font-size: 10px; font-weight: 700;">LOCAL AREA</span>
           </div>
 
           <div class="location-selector-box">

@@ -123,11 +123,11 @@
   let activeVuln = "no_website"; // 'no_website' | 'unclaimed' | 'insecure_ssl' | 'dead_link'
   let savedLeadsCount = 0;
 
-  // Lifetime Quota Management (100 Free Lifetime Leads)
+  // Lifetime Quota Management (10 Free Lifetime Leads)
   let userQuota = {
-    freeQuota: currentUser.freeQuota || 100,
+    freeQuota: (currentUser.freeQuota && currentUser.freeQuota <= 10) ? currentUser.freeQuota : 10,
     leadsGenerated: currentUser.leadsGenerated || 0,
-    leadsRemaining: typeof currentUser.leadsRemaining === 'number' ? currentUser.leadsRemaining : 100
+    leadsRemaining: typeof currentUser.leadsRemaining === 'number' && currentUser.leadsRemaining <= 10 ? currentUser.leadsRemaining : 10
   };
 
   // Persistent Chat History
@@ -178,6 +178,8 @@
   // ------------------------------------------------------------------------
   document.addEventListener('DOMContentLoaded', () => {
     initUserAndQuota();
+    initSidebarCustomizer();
+    initChatGeolocation();
     initInputEvents();
     initVulnerabilityToggles();
     initCascadingPlacesPicker();
@@ -219,14 +221,15 @@
       quotaRemainingEl.textContent = userQuota.leadsRemaining;
     }
     if (quotaBarFill) {
-      const pct = Math.max(0, Math.min(100, (userQuota.leadsRemaining / (userQuota.freeQuota || 100)) * 100));
+      const maxQ = userQuota.freeQuota || 10;
+      const pct = Math.max(0, Math.min(100, (userQuota.leadsRemaining / maxQ) * 100));
       quotaBarFill.style.width = `${pct}%`;
     }
     if (quotaBadgePill) {
       quotaBadgePill.classList.remove('warning', 'danger');
       if (userQuota.leadsRemaining <= 0) {
         quotaBadgePill.classList.add('danger');
-      } else if (userQuota.leadsRemaining <= 20) {
+      } else if (userQuota.leadsRemaining <= 3) {
         quotaBadgePill.classList.add('warning');
       }
     }
@@ -465,6 +468,145 @@
           session: currentSession
         })
       }).catch(err => console.warn('[Save Chat Backend Error]', err));
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // FILTER SIDEBAR CUSTOMIZATION (TILT & SCREEN COVERAGE)
+  // ------------------------------------------------------------------------
+  function initSidebarCustomizer() {
+    const coverageBtns = document.querySelectorAll('.coverage-pill-btn');
+    const tiltBtns = document.querySelectorAll('.tilt-pill-btn');
+
+    // Restore saved width
+    const savedWidth = localStorage.getItem('brandleads_sidebar_width') || 'normal';
+    applyWidth(savedWidth);
+
+    // Restore saved tilt
+    const savedTilt = localStorage.getItem('brandleads_sidebar_tilt') || 'flat';
+    applyTilt(savedTilt);
+
+    coverageBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const width = btn.getAttribute('data-width');
+        applyWidth(width);
+        localStorage.setItem('brandleads_sidebar_width', width);
+      });
+    });
+
+    tiltBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tilt = btn.getAttribute('data-tilt');
+        applyTilt(tilt);
+        localStorage.setItem('brandleads_sidebar_tilt', tilt);
+      });
+    });
+
+    function applyWidth(width) {
+      if (!darkSidebar) return;
+      darkSidebar.classList.remove('width-narrow', 'width-normal', 'width-wide', 'width-max');
+      darkSidebar.classList.add(`width-${width}`);
+      coverageBtns.forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-width') === width);
+      });
+    }
+
+    function applyTilt(tilt) {
+      if (!darkSidebar) return;
+      darkSidebar.classList.remove('tilt-left', 'tilt-flat', 'tilt-right');
+      darkSidebar.classList.add(`tilt-${tilt}`);
+      tiltBtns.forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-tilt') === tilt);
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // GEOLOCATION & LOCAL AREA TARGETING (AUTOMATIC GPS)
+  // ------------------------------------------------------------------------
+  function initChatGeolocation() {
+    const btnDetect = document.getElementById('btn-chat-detect-loc');
+
+    // Check cached location first
+    try {
+      const cached = localStorage.getItem('brandleads_detected_location') || localStorage.getItem('brandleads_user_location');
+      if (cached) {
+        const loc = JSON.parse(cached);
+        if (loc && loc.city) {
+          activeCity = loc.city;
+          if (loc.state) activeState = loc.state;
+          if (loc.country) activeCountry = loc.country;
+          updateLocationDisplays();
+        }
+      }
+    } catch (e) {}
+
+    async function detectCurrentLocation() {
+      if (!navigator.geolocation) return;
+      if (navTargetLabel) navTargetLabel.textContent = '📍 Detecting Local Area...';
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          try {
+            let city = '';
+            let state = '';
+            let country = 'India';
+
+            try {
+              const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+              if (res.ok) {
+                const data = await res.json();
+                city = data.city || data.locality || data.principalSubdivision || '';
+                state = data.principalSubdivision || '';
+                country = data.countryName || 'India';
+              }
+            } catch (e) {
+              const res2 = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+              if (res2.ok) {
+                const data2 = await res2.json();
+                const addr = data2.address || {};
+                city = addr.city || addr.town || addr.municipality || addr.state_district || '';
+                state = addr.state || '';
+                country = addr.country || 'India';
+              }
+            }
+
+            if (city) {
+              activeCity = city;
+              if (state) activeState = state;
+              activeCountry = country;
+              localStorage.setItem('brandleads_detected_location', JSON.stringify({ city, state, country }));
+              updateLocationDisplays();
+              showDarkToast(`📍 Targeted your local area: ${city}, ${state}`);
+            }
+          } catch (err) {
+            console.warn('[Chat Geolocation error]', err);
+          }
+        },
+        (err) => {
+          console.warn('[Chat GPS error]', err.message);
+        },
+        { timeout: 10000, maximumAge: 600000, enableHighAccuracy: false }
+      );
+    }
+
+    // Auto-prompt location on chat load
+    detectCurrentLocation();
+
+    if (btnDetect) {
+      btnDetect.addEventListener('click', (e) => {
+        e.preventDefault();
+        detectCurrentLocation();
+      });
+    }
+
+    if (navTargetLabel) {
+      navTargetLabel.style.cursor = 'pointer';
+      navTargetLabel.addEventListener('click', () => {
+        detectCurrentLocation();
+      });
     }
   }
 
@@ -818,7 +960,7 @@
   async function executePipelineMission(promptText) {
     if (isExecuting) return;
 
-    // Check if user has depleted their 100 free lifetime leads
+    // Check if user has depleted their 10 free lifetime leads
     if (userQuota.leadsRemaining <= 0) {
       if (heroEmptyState) heroEmptyState.style.display = 'none';
       appendUserTurn(promptText);
@@ -834,13 +976,13 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
           </svg>
-          <span>100 Free Lifetime Leads Limit Reached</span>
+          <span>10 Free Lifetime Leads Limit Reached</span>
         </div>
         <div class="quota-exceeded-desc">
-          You have successfully generated and verified all <strong>100 free leads</strong> included in your lifetime starter tier. Upgrade your account to unlock unlimited live search missions, instant Google Maps synchronisation, and priority CSV exports.
+          You have successfully generated and verified all <strong>10 free leads</strong> included in your lifetime starter tier. Upgrade your account to unlock unlimited live search missions, instant Google Maps synchronisation, and priority CSV exports.
         </div>
         <a href="index.html#pricing" class="btn-quota-upgrade">
-          <span>Upgrade to Unlimited Pro</span>
+          <span>Upgrade Account (₹300/mo)</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
@@ -919,12 +1061,12 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
             </svg>
-            <span>100 Free Lifetime Leads Limit Reached</span>
+            <span>10 Free Lifetime Leads Limit Reached</span>
           </div>
           <div class="quota-exceeded-desc">
-            You have used all 100 free lifetime leads. Upgrade your plan to unlock unlimited lead generation and automated CRM exports.
+            You have used all 10 free lifetime leads. Upgrade your plan to unlock high-volume lead generation and automated WhatsApp/CRM exports.
           </div>
-          <a href="index.html#pricing" class="btn-quota-upgrade">Upgrade Account →</a>
+          <a href="index.html#pricing" class="btn-quota-upgrade">Upgrade Account (₹300/mo) →</a>
         `;
         contentArea.appendChild(quotaExceededBox);
       } else {
@@ -935,7 +1077,7 @@
         // Deduct from quota locally
         const used = fallbackData.leads.length;
         userQuota.leadsGenerated = (userQuota.leadsGenerated || 0) + used;
-        userQuota.leadsRemaining = Math.max(0, (userQuota.freeQuota || 100) - userQuota.leadsGenerated);
+        userQuota.leadsRemaining = Math.max(0, (userQuota.freeQuota || 10) - userQuota.leadsGenerated);
         if (currentUser) {
           currentUser.leadsGenerated = userQuota.leadsGenerated;
           currentUser.leadsRemaining = userQuota.leadsRemaining;

@@ -384,12 +384,21 @@ body.night-theme .brand-logo-light-theme {
 
 .hero-section {
   padding: 84px 0 70px;
-  text-align: center;
+  text-align: left;
 }
 
 .hero-content {
-  max-width: 960px;
-  margin: 0 auto;
+  max-width: 980px;
+  margin: 0;
+  text-align: left;
+}
+
+.hero-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .hero-badge-tag {
@@ -403,7 +412,6 @@ body.night-theme .brand-logo-light-theme {
   font-size: 13px;
   font-weight: 600;
   color: var(--navy-700);
-  margin-bottom: 24px;
 }
 
 .hero-badge-dot {
@@ -413,15 +421,38 @@ body.night-theme .brand-logo-light-theme {
   background: var(--navy-700);
 }
 
-/* Original Editorial Serif Headline */
+.hero-location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-light);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.hero-loc-ping {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+/* Original Editorial Serif Headline - Left Aligned */
 .hero-headline {
   font-family: var(--font-serif);
-  font-size: clamp(42px, 5.8vw, 72px);
+  font-size: clamp(40px, 5.4vw, 68px);
   font-weight: 500;
-  line-height: 1.06;
+  line-height: 1.08;
   letter-spacing: -0.03em;
   color: var(--text-black);
   margin-bottom: 24px;
+  text-align: left;
 }
 
 .hero-headline em {
@@ -433,9 +464,10 @@ body.night-theme .brand-logo-light-theme {
   font-family: var(--font-sans);
   font-size: clamp(16px, 1.8vw, 19px);
   color: var(--text-secondary);
-  max-width: 760px;
-  margin: 0 auto 38px;
+  max-width: 780px;
+  margin: 0 0 36px 0;
   line-height: 1.6;
+  text-align: left;
 }
 
 .hero-subhead strong {
@@ -445,8 +477,9 @@ body.night-theme .brand-logo-light-theme {
 
 /* Hero Conversion Box */
 .hero-signup-box {
-  max-width: 580px;
-  margin: 0 auto;
+  max-width: 620px;
+  margin: 0;
+  text-align: left;
 }
 
 .signup-terms-disclaimer {

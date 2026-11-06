@@ -56,13 +56,12 @@
         <!-- Main Navigation Links with Skiper UI CssLink Animated Hover -->
         <nav aria-label="Main Navigation">
           <ul class="nav-links">
+            <li><a href="#console" class="nav-link skiper-css-link">Leads</a></li>
             <li><a href="chat.html" class="nav-link skiper-css-link nav-link-ai" style="color: #38BDF8; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><span class="live-ai-pulse-dot"></span>AI Chatbot</a></li>
             <li><a href="#console" class="nav-link skiper-css-link">Live Console</a></li>
-            <li><a href="#case-study" class="nav-link skiper-css-link">Case Study</a></li>
             <li><a href="#methodology" class="nav-link skiper-css-link">Methodology</a></li>
             <li><a href="#pricing" class="nav-link skiper-css-link">Pricing</a></li>
-            <li><a href="blog.html" class="nav-link skiper-css-link">Blog</a></li>
-            <li><a href="terms.html" class="nav-link skiper-css-link">Terms</a></li>
+            <li><a href="terms.html" class="nav-link skiper-css-link">The Terms</a></li>
             <li><a href="#faq" class="nav-link skiper-css-link">FAQ</a></li>
           </ul>
         </nav>
@@ -159,15 +158,14 @@
     </div>
     <div class="mobile-drawer-body">
       <ul class="mobile-drawer-links">
-        <li><a href="chat.html" class="mobile-drawer-link highlight-ai">⚡ Launch AI Chatbot (100 Free Leads)</a></li>
-        <li><a href="#console" class="mobile-drawer-link">Live Radar Console</a></li>
-        <li><a href="#case-study" class="mobile-drawer-link">Vanguard Case Study</a></li>
-        <li><a href="#methodology" class="mobile-drawer-link">Verification Methodology</a></li>
-        <li><a href="#pricing" class="mobile-drawer-link">Pricing Plans</a></li>
+        <li><a href="#console" class="mobile-drawer-link">Leads</a></li>
+        <li><a href="chat.html" class="mobile-drawer-link highlight-ai">⚡ Launch AI Chatbot (10 Free Leads)</a></li>
+        <li><a href="#console" class="mobile-drawer-link">Live Console</a></li>
+        <li><a href="#methodology" class="mobile-drawer-link">Methodology</a></li>
+        <li><a href="#pricing" class="mobile-drawer-link">Pricing</a></li>
         <li><a href="blog.html" class="mobile-drawer-link">Blog & Growth Guides</a></li>
-        <li><a href="how-to-find-leads-google-maps.html" class="mobile-drawer-link">How to Find Leads Guide</a></li>
-        <li><a href="terms.html" class="mobile-drawer-link">Terms & Conditions</a></li>
-        <li><a href="#faq" class="mobile-drawer-link">Frequently Asked Questions</a></li>
+        <li><a href="terms.html" class="mobile-drawer-link">The Terms</a></li>
+        <li><a href="#faq" class="mobile-drawer-link">FAQ</a></li>
       </ul>
 
       <!-- Mobile Drawer Auth Actions -->
@@ -177,7 +175,7 @@
             Sign In / Create Account
           </button>
           <a href="chat.html" class="btn-drawer-cta">
-            Open Chatbot (100 Free Leads)
+            Open Chatbot (10 Free Leads)
           </a>
         </div>
         <div id="mobile-drawer-authenticated" style="display: none;">
@@ -204,9 +202,16 @@
       <div class="container">
         <div class="hero-content">
           
-          <div class="hero-badge-tag">
-            <span class="hero-badge-dot"></span>
-            <span>BrandLeads Autonomous Radar</span>
+          <div class="hero-meta-row" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+            <div class="hero-badge-tag" style="margin-bottom: 0;">
+              <span class="hero-badge-dot"></span>
+              <span>BrandLeads Autonomous Radar</span>
+            </div>
+            <div class="hero-location-badge" id="hero-detected-loc-badge" title="Auto-detecting your local area via browser GPS" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; background: rgba(0,0,0,0.04); border: 1px solid var(--border-light); font-size: 12.5px; color: var(--text-secondary);">
+              <span class="hero-loc-ping" style="width: 7px; height: 7px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
+              <span id="hero-loc-text">📍 Detecting local area...</span>
+              <button type="button" id="btn-hero-detect-loc" style="background: none; border: none; font-size: 11px; text-decoration: underline; cursor: pointer; color: var(--navy-700); padding: 0 4px;">Change Area</button>
+            </div>
           </div>
 
           <!-- Editorial Serif Main Headline with Skiper UI Scroll Text Reveal -->
@@ -225,7 +230,7 @@
             <!-- State 1: Unauthenticated Visitor -->
             <div id="hero-unauthenticated">
               <div class="signup-terms-disclaimer">
-                Start prospecting in 60 seconds. <strong>100 free diagnostic leads</strong> included on signup.
+                Start prospecting in 60 seconds. <strong>10 free diagnostic leads</strong> included on signup.
               </div>
 
               <!-- Email Input + Action Button -->
@@ -251,7 +256,7 @@
                     <circle cx="8.5" cy="7" r="4"/>
                     <polyline points="17 11 19 13 23 9"/>
                   </svg>
-                  <span>Sign In / Create Free Account (100 Free Leads)</span>
+                  <span>Sign In / Create Free Account (10 Free Leads)</span>
                 </button>
               </div>
             </div>
@@ -280,116 +285,23 @@
               </div>
 
               <p class="hero-auth-desc">
-                Your authenticated workspace is live. Launch the real-time AI agent or browse your live diagnostic console.
+                Your authenticated workspace is live. Launch the real-time AI agent to uncover high-margin local business leads.
               </p>
 
               <div class="hero-auth-actions">
-                <a href="chat.html" class="btn-hero-launch-agent">
+                <a href="chat.html" class="btn-hero-launch-agent" style="width: 100%; justify-content: center;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                   </svg>
                   <span>Launch Live AI Agent</span>
                 </a>
-                <a href="#console" class="btn-hero-view-console">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="3" y1="9" x2="21" y2="9"/>
-                    <line x1="9" y1="21" x2="9" y2="9"/>
-                  </svg>
-                  <span>Open Live Console</span>
-                </a>
               </div>
             </div>
 
           </div>
 
         </div>
-      </div>
-    </section>
-
-    <!-- AGENCY CASE STUDY (EDITORIAL QUOTE + METRICS) -->
-    <section class="impact-quote-section" id="case-study">
-      <div class="container">
-        
-        <div class="impact-quote-card liquid-glass-card card-tilt-3d">
-          
-          <!-- Left: Real Agency Metrics in Navy Blue -->
-          <div class="impact-metrics-col">
-            <div class="impact-client-logo">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/>
-                <polyline points="2 12 12 17 22 12"/>
-              </svg>
-              <span>Vanguard Studio</span>
-            </div>
-
-            <div class="impact-stat-group">
-              <span class="impact-stat-number">$42,000</span>
-              <span class="impact-stat-label">New client pipeline in 30 days</span>
-            </div>
-
-            <div class="impact-stat-group">
-              <span class="impact-stat-number">11</span>
-              <span class="impact-stat-label">Websites sold from Google Map leads</span>
-            </div>
-          </div>
-
-          <!-- Right: Editorial Quote + Author -->
-          <div class="impact-quote-col">
-            <blockquote class="impact-quote-text">
-              “Before BrandLeads, our agency was cold emailing random LinkedIn directors with an abysmal 2% reply rate. Prospecting businesses on Google Maps with 50+ glowing reviews that literally had no website changed our business model. Our reply rate jumped to 28% because the client pain point is immediate and undeniable.”
-            </blockquote>
-
-            <div class="impact-author-box">
-              <div class="impact-avatar">ER</div>
-              <div>
-                <div class="impact-author-name">Elena Rostova</div>
-                <div class="impact-author-role">Founder & Lead Strategist at Vanguard Studio</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/>
-                <polyline points="2 12 12 17 22 12"/>
-              </svg>
-              <span>Vanguard Studio</span>
-            </div>
-
-            <div class="impact-stat-group">
-              <span class="impact-stat-number">$42,000</span>
-              <span class="impact-stat-label">New client pipeline in 30 days</span>
-            </div>
-
-            <div class="impact-stat-group">
-              <span class="impact-stat-number">11</span>
-              <span class="impact-stat-label">Websites sold from Google Map leads</span>
-            </div>
-          </div>
-
-          <!-- Right: Editorial Quote + Author -->
-          <div class="impact-quote-col">
-            <blockquote class="impact-quote-text">
-              “Before BrandLeads, our agency was cold emailing random LinkedIn directors with an abysmal 2% reply rate. Prospecting businesses on Google Maps with 50+ glowing reviews that literally had no website changed our business model. Our reply rate jumped to 28% because the client pain point is immediate and undeniable.”
-            </blockquote>
-
-            <div class="impact-author-box">
-              <div class="impact-avatar">ER</div>
-              <div>
-                <div class="impact-author-name">Elena Rostova</div>
-                <div class="impact-author-role">Founder & Lead Strategist at Vanguard Studio</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
       </div>
     </section>
 
@@ -782,99 +694,118 @@
       <div class="container">
         
         <div class="section-editorial-header">
-          <span class="section-pill-tag">Subscription</span>
+          <span class="section-pill-tag">Flexible Investment</span>
           <h2 class="section-editorial-title">Predictable Pricing for High-Margin Outbound</h2>
-          <p class="section-editorial-desc">Every subscription begins with 25 free evaluation audits. No credit card required.</p>
+          <p class="section-editorial-desc">Every account includes 10 free verified diagnostic leads upon signup. No credit card required.</p>
         </div>
 
         <div class="pricing-cards-grid">
           
-          <!-- Scout -->
+          <!-- Starter Card -->
           <div class="pricing-card liquid-glass-card card-tilt-3d">
-            <h3 class="plan-title">Freelance Scout</h3>
-            <p class="plan-desc">For solo web designers and freelancers landing their first recurring retainers.</p>
+            <span class="featured-pill-badge" style="background: rgba(0,0,0,0.06); color: var(--text-secondary); border-color: var(--border-light);">Flexible Plan</span>
+            <h3 class="plan-title">Starter</h3>
+            <p class="plan-desc">For solo freelancers and designers landing high-value local business retainers.</p>
             <div class="plan-price-row">
-              <span class="plan-price-val">$19</span>
+              <span class="plan-price-val">₹300</span>
               <span class="plan-price-period">/ month</span>
+            </div>
+            <div class="plan-billing-subtext" style="font-size: 13px; color: var(--text-secondary); margin-top: -8px; margin-bottom: 16px;">
+              <strong>₹250/mo</strong> when paid yearly (₹3,000 billed annually, min 1-year tenure) · Or <strong>₹600/month</strong> billed monthly
+            </div>
+            <div class="plan-quota-callout" style="padding: 10px 14px; background: rgba(0,0,0,0.03); border-radius: 8px; border: 1px solid var(--border-light); font-size: 13.5px; font-weight: 600; margin-bottom: 20px;">
+              ⚡ <strong>700 to 800 leads</strong> a month
             </div>
             <ul class="plan-bullets">
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>350 Live Map Scans per month</span>
+                <span><strong>700 – 800 Verified Leads</strong> every month</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Automated DNS & SSL Verification</span>
+                <span>Automated DNS, SSL & 404 Verification</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Tailored Outreach Pitch Generator</span>
+                <span>Unmasked Phone & WhatsApp Contact Info</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>1-Click CSV and Sheets Export</span>
+                <span>1-Click CSV & Google Sheets Export</span>
               </li>
             </ul>
-            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0;">Start 7-Day Free Trial</button>
+            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0;">Get Started (10 Free Leads)</button>
           </div>
 
-          <!-- Agency Engine (Featured) -->
+          <!-- Growth Engine (Featured) -->
           <div class="pricing-card featured liquid-glass-card card-tilt-3d">
             <span class="featured-pill-badge">Most Popular</span>
-            <h3 class="plan-title">Agency Engine</h3>
-            <p class="plan-desc">For growing agencies running systematic weekly outbound prospecting.</p>
+            <h3 class="plan-title">Growth Scaler</h3>
+            <p class="plan-desc">For growing agencies running systematic weekly outbound prospecting across India.</p>
             <div class="plan-price-row">
-              <span class="plan-price-val">$49</span>
+              <span class="plan-price-val">₹600</span>
               <span class="plan-price-period">/ month</span>
+            </div>
+            <div class="plan-billing-subtext" style="font-size: 13px; color: var(--text-secondary); margin-top: -8px; margin-bottom: 16px;">
+              When paid yearly (Save 40%) · Or <strong>₹1,000/month</strong> billed monthly
+            </div>
+            <div class="plan-quota-callout" style="padding: 10px 14px; background: rgba(56, 189, 248, 0.08); border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.25); font-size: 13.5px; font-weight: 700; color: var(--text-black); margin-bottom: 20px;">
+              🔥 <strong>Nearly 10,000 leads</strong> a month total credits
             </div>
             <ul class="plan-bullets">
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span><strong>2,000 Live Map Scans</strong> per month</span>
+                <span><strong>10,000 Verified Leads</strong> monthly capacity</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Decision Maker Contact Enrichment</span>
+                <span>Full Digital Vulnerability Radar (Maps + SSL + 404s)</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Automated 1-Page PDF Audit Generator</span>
+                <span>AI Consultative Pitch & Cold Script Generator</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>3 Team Workspace Seats Included</span>
+                <span>Unlimited Saved Searches & Fast Cloud Sync</span>
               </li>
             </ul>
-            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0; background: var(--navy-900);">Claim 7-Day Trial</button>
+            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0; background: var(--navy-900);">Upgrade to Growth</button>
           </div>
 
-          <!-- Enterprise Network -->
+          <!-- Agency & Business (Contact Sales - No Pricing Shown) -->
           <div class="pricing-card liquid-glass-card card-tilt-3d">
-            <h3 class="plan-title">Enterprise Network</h3>
-            <p class="plan-desc">For large teams requiring raw programmatic API feeds and custom webhooks.</p>
+            <span class="featured-pill-badge" style="background: rgba(0,0,0,0.06); color: var(--text-secondary); border-color: var(--border-light);">Enterprise</span>
+            <h3 class="plan-title">Agency / Business</h3>
+            <p class="plan-desc">For large teams and enterprise scrapers requiring custom volume and dedicated nodes. Personally configured by our founder.</p>
             <div class="plan-price-row">
-              <span class="plan-price-val">$99</span>
-              <span class="plan-price-period">/ month</span>
+              <span class="plan-price-val" style="font-size: clamp(28px, 4vw, 36px);">Contact Sales</span>
+            </div>
+            <div class="plan-billing-subtext" style="font-size: 13px; color: var(--text-secondary); margin-top: -8px; margin-bottom: 16px;">
+              Tailored custom quota & terms based on your exact scale
+            </div>
+            <div class="plan-quota-callout" style="padding: 10px 14px; background: rgba(0,0,0,0.03); border-radius: 8px; border: 1px solid var(--border-light); font-size: 13.5px; font-weight: 600; margin-bottom: 20px;">
+              🏢 <strong>Custom Lead Volume</strong> on request
             </div>
             <ul class="plan-bullets">
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span><strong>7,500 Live Map Scans</strong> per month</span>
+                <span>Custom Bulk Multi-City Google Maps Scraping</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>REST API & Automated Webhooks</span>
+                <span>REST API Access & Real-Time Webhooks</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Unlimited Team Workspace Seats</span>
+                <span>White-Label Client Audit Reports</span>
               </li>
               <li class="plan-bullet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Dedicated Proxy Infrastructure</span>
+                <span>Direct Founder Onboarding & Account Review</span>
               </li>
             </ul>
-            <button class="btn-pill-black open-auth-modal" style="width: 100%; padding: 12px 0;">Contact Sales</button>
+            <a href="mailto:contact@brandleads.ai?subject=Agency%20Business%20Inquiry" class="btn-pill-black" style="width: 100%; padding: 12px 0; text-align: center; text-decoration: none; display: block;">Contact Sales</a>
           </div>
 
         </div>
@@ -893,11 +824,11 @@
 
         <div class="faq-card-item open">
           <button class="faq-button" aria-expanded="true">
-            <span>How does BrandLeads detect businesses with digital gaps?</span>
+            <span>What does Brandleads provide?</span>
             <span>+</span>
           </button>
           <div class="faq-answer">
-            BrandLeads probes active Google Places listings across target metropolitan markets. If a business has no website attribute, an expired DNS entry, or fails modern mobile viewport handshake requirements, our system tags it with a digital gap score and compiles an outreach angle.
+            It provides the scraped data of the leads which you need for the website that converts, with verified business details, contact info, and digital gaps.
           </div>
         </div>
 
@@ -907,7 +838,7 @@
             <span>+</span>
           </button>
           <div class="faq-answer">
-            BrandLeads operates across all global regions supported by Google Maps Platform, including India, the United States, United Kingdom, Canada, Australia, and European metropolitan corridors.
+            For now it is only for India. If you are worldwide, from any other place, then you can just communicate via the registered number or email for a custom plan.
           </div>
         </div>
 
@@ -917,7 +848,7 @@
             <span>+</span>
           </button>
           <div class="faq-answer">
-            Yes. You can export enriched prospect lists to CSV or Google Sheets with one click, or configure automated webhook streams to Zapier, Make, or HubSpot on Agency and Enterprise tiers.
+            You can take your generated leads and share or export them to any destination including WhatsApp, CSV, or your CRM with one click.
           </div>
         </div>
 
@@ -952,7 +883,6 @@
             <h5>Agency Hub</h5>
             <a href="blog.html">Blog & Guides</a>
             <a href="how-to-find-leads-google-maps.html">How to Find Leads Guide</a>
-            <a href="#case-study">Vanguard Case Study</a>
           </div>
           <div class="footer-nav-col">
             <h5>Legal</h5>
@@ -993,7 +923,7 @@
       <!-- Tab Switcher (Sign In vs Create Account) -->
       <div class="auth-nav-tabs" id="auth-nav-tabs">
         <button type="button" class="auth-tab-btn active" id="tab-btn-signin">Sign In</button>
-        <button type="button" class="auth-tab-btn" id="tab-btn-signup">Create Account (100 Free Leads)</button>
+        <button type="button" class="auth-tab-btn" id="tab-btn-signup">Create Account (10 Free Leads)</button>
       </div>
 
       <!-- VIEW 1: SIGN IN -->
@@ -1025,14 +955,14 @@
         </form>
 
         <div class="auth-footer-prompt">
-          Don't have an account? <button type="button" class="auth-link-accent" id="link-goto-signup">Create free account (100 Leads)</button>
+          Don't have an account? <button type="button" class="auth-link-accent" id="link-goto-signup">Create free account (10 Leads)</button>
         </div>
       </div>
 
       <!-- VIEW 2: CREATE ACCOUNT (SIGN UP) -->
       <div class="auth-view-panel" id="auth-view-signup" style="display: none;">
         <h2 class="auth-view-heading">Create your free account</h2>
-        <p class="auth-view-desc">Unlock <strong>100 free lifetime leads</strong> and full access to the AI Chatbot. We'll send a 6-digit OTP code to verify your email.</p>
+        <p class="auth-view-desc">Unlock <strong>10 free lifetime leads</strong> and full access to the AI Chatbot. We'll send a 6-digit OTP code to verify your email.</p>
 
         <form id="form-signup" class="auth-form" onsubmit="return false;">
           <div class="auth-field">

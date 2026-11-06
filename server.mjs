@@ -94,10 +94,10 @@ function verifySession(userId, token) {
   }
 }
 
-// Ensure lifetime free quota of 100 leads and chat sessions array
+// Ensure lifetime free quota of 10 leads and chat sessions array
 function ensureUserQuota(user) {
   if (!user) return null;
-  if (typeof user.freeQuota !== 'number') user.freeQuota = 100;
+  if (typeof user.freeQuota !== 'number' || user.freeQuota > 10) user.freeQuota = 10;
   if (typeof user.leadsGenerated !== 'number') user.leadsGenerated = 0;
   user.leadsRemaining = Math.max(0, user.freeQuota - user.leadsGenerated);
   if (!Array.isArray(user.chatSessions)) user.chatSessions = [];
@@ -795,12 +795,12 @@ const server = http.createServer(async (req, res) => {
 
       ensureUserQuota(user);
 
-      // Check lifetime free quota of 100 leads
+      // Check lifetime free quota of 10 leads
       if (user.leadsRemaining <= 0) {
         return sendJson(res, 403, {
           success: false,
           quotaExceeded: true,
-          error: 'You have reached your 100 free lifetime leads limit. Upgrade to a paid plan to unlock unlimited leads.',
+          error: 'You have reached your 10 free lifetime leads limit. Upgrade to a paid plan to unlock unlimited leads.',
           freeQuota: user.freeQuota,
           leadsGenerated: user.leadsGenerated,
           leadsRemaining: 0
@@ -1006,9 +1006,9 @@ Return ONLY a JSON object with keys: "email", "phone", "dm". No markdown code bl
         authProvider: 'email_password',
         savedLeads: [],
         history: [],
-        freeQuota: 100,
+        freeQuota: 10,
         leadsGenerated: 0,
-        leadsRemaining: 100,
+        leadsRemaining: 10,
         chatSessions: []
       };
 

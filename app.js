@@ -241,6 +241,7 @@ function showToast(message, type = 'info') {
 document.addEventListener('DOMContentLoaded', () => {
   initThemeMode();
   initMobileNavDrawer();
+  initAutomaticGeolocation();
   initAiPromptBar();
   initScanner();
   initPresetChips();
@@ -400,7 +401,7 @@ function openChatbotOrAuth(targetUrl = 'chat.html') {
     } else if (modal) {
       modal.setAttribute('open', '');
     }
-    showToast('Create your free account to unlock 100 free leads and access the AI Chatbot!', 'info');
+    showToast('Create your free account to unlock 10 free leads and access the AI Chatbot!', 'info');
   }
 }
 
@@ -1066,19 +1067,121 @@ function escapeHtml(str) {
    ========================================================================== */
 
 function initFaqAccordion() {
-  const faqItems = document.querySelectorAll('.editorial-faq-item');
+  const faqItems = document.querySelectorAll('.faq-card-item, .editorial-faq-item');
   faqItems.forEach(item => {
-    const question = item.querySelector('.faq-question');
-    if (!question) return;
+    const trigger = item.querySelector('.faq-button, .faq-question');
+    if (!trigger) return;
 
-    question.addEventListener('click', () => {
-      const isOpen = item.classList.contains('active');
-      faqItems.forEach(i => i.classList.remove('active'));
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isOpen = item.classList.contains('open') || item.classList.contains('active');
+      
+      // Close all items
+      faqItems.forEach(i => {
+        i.classList.remove('open', 'active');
+        const btn = i.querySelector('.faq-button, .faq-question');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+
+      // Toggle current item
       if (!isOpen) {
-        item.classList.add('active');
+        item.classList.add('open', 'active');
+        trigger.setAttribute('aria-expanded', 'true');
       }
     });
   });
+}
+
+function initAutomaticGeolocation() {
+  const locText = document.getElementById('hero-loc-text');
+  const btnChange = document.getElementById('btn-hero-detect-loc');
+  const cityInput = document.getElementById('scanner-city-input');
+
+  // Check cached location first
+  try {
+    const cached = localStorage.getItem('brandleads_user_location');
+    if (cached) {
+      const loc = JSON.parse(cached);
+      if (loc && loc.city) {
+        applyLocation(loc.city, loc.state, loc.country, false);
+      }
+    }
+  } catch (e) {}
+
+  function applyLocation(city, state, country, showNotice = true) {
+    const formatted = state ? `${city}, ${state}` : city;
+    if (locText) locText.textContent = `📍 Local Area: ${formatted}`;
+    if (cityInput) cityInput.value = `${city}, India`;
+    if (showNotice) {
+      showToast(`📍 Auto-targeted your local area: ${formatted}`, 'success');
+    }
+    localStorage.setItem('brandleads_user_location', JSON.stringify({ city, state, country }));
+    localStorage.setItem('brandleads_detected_location', JSON.stringify({ city, state, country }));
+  }
+
+  async function detectLocation() {
+    if (!navigator.geolocation) {
+      if (locText) locText.textContent = '📍 India (National)';
+      return;
+    }
+
+    if (locText) locText.textContent = '📍 Detecting local GPS...';
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        try {
+          let city = '';
+          let state = '';
+          let country = 'India';
+
+          try {
+            const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+            if (res.ok) {
+              const data = await res.json();
+              city = data.city || data.locality || data.principalSubdivision || '';
+              state = data.principalSubdivision || '';
+              country = data.countryName || 'India';
+            }
+          } catch (e) {
+            const res2 = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+            if (res2.ok) {
+              const data2 = await res2.json();
+              const addr = data2.address || {};
+              city = addr.city || addr.town || addr.municipality || addr.state_district || '';
+              state = addr.state || '';
+              country = addr.country || 'India';
+            }
+          }
+
+          if (city) {
+            applyLocation(city, state, country, true);
+          } else {
+            if (locText) locText.textContent = '📍 Local Area Detected';
+          }
+        } catch (err) {
+          console.warn('[Geolocation reverse-geocode error]', err);
+          if (locText) locText.textContent = '📍 India (Target Area)';
+        }
+      },
+      (err) => {
+        console.warn('[Geolocation error]', err.message);
+        if (locText) locText.textContent = '📍 India (Click to Target)';
+      },
+      { timeout: 10000, maximumAge: 600000, enableHighAccuracy: false }
+    );
+  }
+
+  // Auto trigger
+  detectLocation();
+
+  if (btnChange) {
+    btnChange.addEventListener('click', (e) => {
+      e.preventDefault();
+      detectLocation();
+    });
+  }
 }
 
 function initAuthModal() {
@@ -1143,7 +1246,7 @@ function initChatbotGating() {
     setTimeout(() => {
       if (authMode === 'signup') {
         switchAuthView('auth-view-signup');
-        showToast('Create your free account to unlock 100 free leads and access the AI Chatbot!', 'info');
+        showToast('Create your free account to unlock 10 free leads and access the AI Chatbot!', 'info');
       } else {
         switchAuthView('auth-view-signin');
       }
